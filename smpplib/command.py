@@ -373,7 +373,7 @@ class Command(pdu.PDU):
         value = None
         if data:
             value = struct.pack(">HH"+format, field_code,field_length,data)
-            print binascii.b2a_hex(value)
+            #print binascii.b2a_hex(value)
         return value
 
 
@@ -395,7 +395,7 @@ class Command(pdu.PDU):
                 field_length = len(field_value)
                 fvalue = field_value + chr(0)
                 value = struct.pack(">HH", field_code, field_length)+fvalue
-                print binascii.b2a_hex(value)
+                #print binascii.b2a_hex(value)
             else:
                 value = None #chr(0)
         #setattr(self, field, field_value)

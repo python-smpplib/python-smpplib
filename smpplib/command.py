@@ -114,6 +114,14 @@ SMPP_PID_DEFAULT = 0x00 #Default
 SMPP_PID_RIP= 0x41    #Replace if present on handset
 
 #
+# SMPP User Data Header Information Element Identifier
+#
+SMPP_UDHIEIE_CONCATENATED = 0x00 #Concatenated short message, 8-bit ref
+SMPP_UDHIEIE_SPECIAL = 0x01 #
+SMPP_UDHIEIE_RESERVED = 0x02 #
+SMPP_UDHIEIE_PORT8 = 0x04 #
+SMPP_UDHIEIE_PORT16 = 0x04 #
+#
 # SMPP protocol versions
 #
 SMPP_VERSION_33 = 0x33

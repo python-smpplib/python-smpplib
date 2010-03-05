@@ -65,7 +65,8 @@ def get_instance():
     global smpp_instance
 
     if smpp_instance is None:
-        smpp_instance = SMPP()
+        smpp_instance = smpp_instance
+# TODO FIXXXXX
 
     return smpp_instance
 

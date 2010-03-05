@@ -246,7 +246,7 @@ class PDU:
             status = self.status
 
         try:
-            desc = status_descs[status]
+            desc = descs[status]
         except KeyError:
             return "Description for status 0x%x not found!" % status
 

@@ -28,6 +28,7 @@ import binascii
 from . import command_codes
 from . import exceptions
 
+SMPP_ESME_ROK = 0x00000000
 
 #
 # Optional parameters map
@@ -90,6 +91,10 @@ def extract_command(pdu):
     return command_codes.get_command_name(code)
 
 
+class default_client:
+    """Dummy client"""
+    sequence = 0
+
 class PDU:
     """PDU class"""
 
@@ -98,26 +103,23 @@ class PDU:
     status = None
 
 
-    def __init__(self, **args):
+    def __init__(self, client=default_client(), **kwargs):
+        """Singleton dummy client will be used if ommited"""
+        if client is None:
+            self._client = default_client()
 
-        self.__dict__.update(**(args))
 
     def get_sequence(self):
         """Return global sequence number"""
-
-        global sequence
-
-        return sequence
+        return self._client.sequence
 
     sequence = property(get_sequence)
 
     def _next_seq():
         """Return next sequence number"""
-        global sequence
+        self._client.sequence += 1
 
-        sequence += 1
-
-        return sequence
+        return self._client.sequence
 
     def is_vendor(self):
         """Return True if this is a vendor PDU, False otherwise"""
@@ -143,7 +145,7 @@ class PDU:
     def is_error(self):
         """Return True if this is an error response, False otherwise"""
 
-        if self.status != exceptions.SMPP_ESME_ROK:
+        if self.status != SMPP_ESME_ROK:
             return True
 
         return False

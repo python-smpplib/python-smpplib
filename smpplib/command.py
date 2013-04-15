@@ -255,9 +255,9 @@ class Command(pdu.PDU):
         self._set_vars(**kwargs)
 
 
-    def _set_vars(self, **args):
+    def _set_vars(self, **kwargs):
 
-        for key, value in args.iteritems():
+        for key, value in kwargs.iteritems():
             if not hasattr(self, key) or getattr(self, key) is None:
                 setattr(self, key, value)
 
@@ -553,7 +553,7 @@ class Command(pdu.PDU):
         return False
 
 
-class Param:
+class Param(object):
     """Command parameter info class"""
 
     def __init__(self, **kwargs):
@@ -610,7 +610,7 @@ class BindTransmitter(Command):
         super(BindTransmitter, self).__init__(command, **kwargs)
 
         #self.__dict__.update({}.fromkeys(self.params.keys()))
-        self._set_vars(**({}.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params.keys())))
 
         self.interface_version = SMPP_VERSION_34
 
@@ -643,7 +643,7 @@ class BindTransmitterResp(Command):
         """Initialize"""
         super(BindTransmitterResp, self).__init__(command, **kwargs)
 
-        self._set_vars(**({}.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params.keys())))
 
 
 class BindReceiverResp(BindTransmitterResp):
@@ -740,7 +740,7 @@ class DataSM(Command):
         super(DataSM, self).__init__(command, **kwargs)
 
         #self.__dict__.update({}.fromkeys(self.params.keys()))
-        self._set_vars(**({}.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params.keys())))
 
 
 class DataSMResp(Command):
@@ -955,7 +955,7 @@ class SubmitSM(Command):
 
         super(SubmitSM, self).__init__(command, **kwargs)
 
-        self._set_vars(**({}.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params.keys())))
 
 
     def prep(self):
@@ -982,7 +982,7 @@ class SubmitSMResp(Command):
 
         super(SubmitSMResp, self).__init__(command, **kwargs)
 
-        self._set_vars(**({}.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params.keys())))
 
 
 class DeliverSM(SubmitSM):
@@ -1050,7 +1050,7 @@ class DeliverSM(SubmitSM):
 
         super(DeliverSM, self).__init__(command, **kwargs)
 
-        self._set_vars(**({}.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params.keys())))
 
 
 class DeliverSMResp(SubmitSMResp): 

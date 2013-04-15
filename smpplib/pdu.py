@@ -91,11 +91,11 @@ def extract_command(pdu):
     return command_codes.get_command_name(code)
 
 
-class default_client:
+class default_client(object):
     """Dummy client"""
     sequence = 0
 
-class PDU:
+class PDU(object):
     """PDU class"""
 
     length = 0
@@ -107,6 +107,8 @@ class PDU:
         """Singleton dummy client will be used if ommited"""
         if client is None:
             self._client = default_client()
+        else:
+            self._client = client
 
 
     def get_sequence(self):
@@ -115,7 +117,7 @@ class PDU:
 
     sequence = property(get_sequence)
 
-    def _next_seq():
+    def _next_seq(self):
         """Return next sequence number"""
         self._client.sequence += 1
 
@@ -185,7 +187,7 @@ class PDU:
         self.length = chunks[0]
         self.command = extract_command(data)
         self.status = chunks[2]
-        self.sequence = chunks[3]
+        self._client.sequence = chunks[3]
 
         if len(data) > 16:
             self.parse_params(data[16:])

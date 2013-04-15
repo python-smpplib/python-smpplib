@@ -237,7 +237,7 @@ class Client:
 
         log('<<', binascii.b2a_hex(raw_pdu), len(raw_pdu), 'bytes')
 
-        cmd = pdu.PDU.extract_command(raw_pdu)
+        cmd = pdu.extract_command(raw_pdu)
         log('Read %s PDU' % cmd)
 
         p = smpp.parse_pdu(raw_pdu)

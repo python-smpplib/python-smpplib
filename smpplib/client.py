@@ -25,21 +25,20 @@
 import socket
 import struct
 import binascii
+import logging
 
-import smpp
-import pdu
-import command
+from . import smpp
+from . import pdu
+from . import command
+from . import exceptions
 
+logger = logging.getLogger('smpplib.client')
 
 SMPP_CLIENT_STATE_CLOSED = 0
 SMPP_CLIENT_STATE_OPEN = 1
 SMPP_CLIENT_STATE_BOUND_TX = 2
 SMPP_CLIENT_STATE_BOUND_RX = 3
 SMPP_CLIENT_STATE_BOUND_TRX = 4
-
-# Debug mode
-# If set to True, debug messages will be outputted to stdout.
-DEBUG = True
 
 
 command_states = {
@@ -115,8 +114,7 @@ def log(*msg):
 
     msg = map(str, msg)
 
-    if DEBUG:
-        print 'DEBUG:', ' '.join(msg)
+    logger.debug(' '.join(msg))
 
 
 class Client:
@@ -129,18 +127,13 @@ class Client:
     vendor = None
     _socket = None
 
-    _stack = []  # PDU stack
-    _error_stack = None
-
-
-    def __init__(self, host, port):
+    def __init__(self, host, port, timeout=5):
         """Initialize"""
 
         self.host = host
         self.port = int(port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.settimeout(5)
-        self._error_stack = []
+        self._socket.settimeout(timeout)
         self.receiver_mode = False
 
 
@@ -153,7 +146,7 @@ class Client:
             self._socket.connect((self.host, self.port))
             self.state = SMPP_CLIENT_STATE_OPEN
         except socket.error:
-            raise ConnectionError("Connection refused")
+            raise exceptions.ConnectionError("Connection refused")
 
 
     def disconnect(self):
@@ -168,7 +161,7 @@ class Client:
     def _bind(self, command_name, **args):
         """Send bind_transmitter command to the SMSC"""
 
-        if command_name in ['bind_receiver', 'bind_transceiver']:
+        if command_name in ('bind_receiver', 'bind_transceiver'):
             log('I am receiver')
             self.receiver_mode = True
 
@@ -200,7 +193,6 @@ class Client:
     def unbind(self):
         """Unbind from the SMSC"""
 
-        #smppinst = smpp.get_instance()
         p = smpp.make_pdu('unbind')
 
         res = self.send_pdu(p)
@@ -211,7 +203,7 @@ class Client:
         """Send PDU to the SMSC"""
 
         if not self.state in command_states[p.command]:
-            raise Exception("Command %s failed: %s" \
+            raise exceptions.PDUError("Command %s failed: %s" \
                 % (p.command, pdu.descs[pdu.SMPP_ESME_RINVBNDSTS]))
 
         self._push_pdu(p)
@@ -252,8 +244,8 @@ class Client:
         self._push_pdu(p)
 
         if p.is_error():
-            raise Exception('(%s) %s: %s' % (p.status, p.command,
-                pdu.descs[p.status]))
+            raise exceptions.PDUError('({}) {}: {}'.format(p.status, p.command,
+                pdu.descs[p.status]), int(p.status))
         elif p.command in state_setters.keys():
             self.state = state_setters[p.command]
 
@@ -294,10 +286,6 @@ class Client:
     def listen(self):
         """Listen for PDUs and act"""
 
-        if not self.receiver_mode:
-            raise Exception('Client.listen() is not allowed to be ' \
-                'invoked manually for non receiver connection')
-
         while True:
             try:
                 p = self.read_pdu()
@@ -313,8 +301,7 @@ class Client:
             elif p.command == 'enquire_link':
                 self._enquire_link_received()
             else:
-                print "WARNING: Unhandled SMPP command '%s'" % p.command
-                
+                logger.warning('Unhandled SMPP command "%s"', p.command)
 
 
     def send_message(self, **args):
@@ -335,22 +322,6 @@ class Client:
         return resp
 
 
-    def _push_pdu(self, p):
-        """Push PDU into a stack"""
-        
-        if p.is_request():
-            k = 'request'
-        else:
-            k = 'response'
-
-        self._stack.append({p.sequence: {k: p}})
-
-
-class ConnectionError(Exception):
-    """Connection error"""
-
-
-
 #
 # Main block for testing
 #
@@ -363,13 +334,13 @@ if __name__ == '__main__':
     def recv_handler(**args):
         p = args['pdu']
         msg = p.short_message
-        print 'Message received:', msg
-        print 'Source address:', p.source_addr
-        print 'Destination address:', p.destination_addr
+        logger.info('Message received: %s', msg)
+        logger.info('Source address: %s', p.source_addr)
+        logger.info('Destination address: %s', p.destination_addr)
 
     client = smpplib.client.Client('localhost', 11111)
     client.connect()
-    
+
     client.set_message_received_handler(recv_handler)
 
     try:

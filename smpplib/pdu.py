@@ -25,6 +25,8 @@
 import struct
 import binascii
 
+from . import command_codes
+
 #
 # SMPP error codes:
 #
@@ -134,55 +136,57 @@ descs = {
 }
 
 
+#
+# Optional parameters map
+#
+optional_params = {
+    'dest_addr_subunit': 0x0005,
+    'dest_network_type': 0x0006,
+    'dest_bearer_type': 0x0007,
+    'dest_telematics_id': 0x0008,
+    'source_addr_subunit': 0x000D,
+    'source_network_type': 0x000E,
+    'source_bearer_type': 0x000F,
+    'source_telematics_id': 0x010,
+    'qos_time_to_live': 0x0017,
+    'payload_type': 0x0019,
+    'additional_status_info_text': 0x01D,
+    'receipted_message_id': 0x001E,
+    'ms_msg_wait_facilities': 0x0030,
+    'privacy_indicator': 0x0201,
+    'source_subaddress': 0x0202,
+    'dest_subaddress': 0x0203,
+    'user_message_reference': 0x0204,
+    'user_response_code': 0x0205,
+    'source_port': 0x020A,
+    'destination_port': 0x020B,
+    'sar_msg_ref_num': 0x020C,
+    'language_indicator': 0x020D,
+    'sar_total_segments': 0x020E,
+    'sar_segment_seqnum': 0x020F,
+    'sc_interface_version': 0x0210,#0x1002,
+    'callback_num_pres_ind': 0x0302,
+    'callback_num_atag': 0x0303,
+    'number_of_messages': 0x0304,
+    'callback_num': 0x0381,
+    'dpf_result': 0x0420,
+    'set_dpf': 0x0421,
+    'ms_availability_status': 0x0422,
+    'network_error_code': 0x0423,
+    'message_payload': 0x0424,
+    'delivery_failure_reason': 0x0425,
+    'more_messages_to_send': 0x0426,
+    'message_state': 0x0427,
+    'ussd_service_op': 0x0501,
+    'display_time': 0x1201,
+    'sms_signal': 0x1203,
+    'ms_validity': 0x1204,
+    'alert_on_message_delivery': 0x130C,
+    'its_reply_type': 0x1380,
+    'its_session_info': 0x1383
+}
+
 sequence = 0
-
-
-def factory(command_name, **args):
-    """Return instance of a specific command class"""
-
-    import command
-
-    CommandClass = None
-
-    if command_name == 'bind_transmitter':
-        CommandClass = command.BindTransmitter
-    elif command_name == 'bind_transmitter_resp':
-        CommandClass = command.BindTransmitterResp
-    if command_name == 'bind_receiver':
-        CommandClass = command.BindReceiver
-    elif command_name == 'bind_receiver_resp':
-        CommandClass = command.BindReceiverResp
-    if command_name == 'bind_transceiver':
-        CommandClass = command.BindTransceiver
-    elif command_name == 'bind_transceiver_resp':
-        CommandClass = command.BindTransceiverResp
-    elif command_name == 'data_sm':
-        CommandClass = command.DataSM
-    elif command_name == 'data_sm_resp':
-        CommandClass = command.DataSMResp
-    elif command_name == 'generic_nack':
-        CommandClass = command.GenericNAck
-    elif command_name == 'submit_sm':
-        CommandClass = command.SubmitSM
-    elif command_name == 'submit_sm_resp':
-        CommandClass = command.SubmitSMResp
-    elif command_name == 'deliver_sm':
-        CommandClass = command.DeliverSM
-    elif command_name == 'deliver_sm_resp':
-        CommandClass = command.DeliverSMResp
-    elif command_name == 'unbind':
-        CommandClass = command.Unbind
-    elif command_name == 'unbind_resp':
-        CommandClass = command.UnbindResp
-    elif command_name == 'enquire_link':
-        CommandClass = command.EnquireLink
-    elif command_name == 'enquire_link_resp':
-        CommandClass = command.EnquireLinkResp
-    if not CommandClass:
-        raise ValueError("Command '%s' is not supported" % command_name)
-
-    return CommandClass(command_name, **(args))
-
 
 
 class PDU:
@@ -196,8 +200,7 @@ class PDU:
     def __init__(self, **args):
 
         self.__dict__.update(**(args))
-    
-    
+
     def get_sequence(self):
         """Return global sequence number"""
 
@@ -207,6 +210,13 @@ class PDU:
 
     sequence = property(get_sequence)
 
+    def _next_seq():
+        """Return next sequence number"""
+        global sequence
+
+        sequence += 1
+
+        return sequence
 
     def is_vendor(self):
         """Return True if this is a vendor PDU, False otherwise"""
@@ -223,8 +233,7 @@ class PDU:
     def is_response(self):
         """Return True if this is a response PDU, False otherwise"""
 
-        import command
-        if command.get_command_code(self.command) & 0x80000000:
+        if command_codes.get_command_code(self.command) & 0x80000000:
             return True
 
         return False
@@ -251,7 +260,6 @@ class PDU:
             return "Description for status 0x%x not found!" % status
 
         return desc
-
 
     def parse(self, data):
         """Parse raw PDU"""
@@ -285,9 +293,7 @@ class PDU:
 
         code = struct.unpack('>L', pdu[4:8])[0]
 
-        import command
-
-        return command.get_command_name(code)
+        return command_codes.get_command_name(code)
 
 
     def _unpack(self, format, data):
@@ -303,9 +309,7 @@ class PDU:
         
         self._length = len(body) + 16
 
-        import command
-        
-        command_code = command.get_command_code(self.command)
+        command_code = command_codes.get_command_code(self.command)
 
         header = struct.pack(">LLLL", self._length, command_code,
                              self.status, self.sequence)

@@ -20,7 +20,8 @@
 # Modified by Yusuf Kaka <yusufk at gmail>
 # Added support for Optional TLV's
 
-import smpp
-import pdu
-import command
-import client
+from . import smpp
+from . import pdu
+from . import command
+from . import client
+from . import exceptions

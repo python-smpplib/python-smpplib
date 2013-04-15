@@ -23,15 +23,13 @@
 """SMPP module"""
 
 import pdu
-
-
-smpp_instance = None
+import command
 
 
 def make_pdu(command_name, **args):
     """Return PDU instance"""
 
-    f = pdu.factory(command_name, **(args))
+    f = command.factory(command_name, **(args))
 
     return f
 
@@ -50,31 +48,5 @@ def parse_pdu(data):
     return new_pdu
 
 
-def next_seq():
-    """Return next sequence number"""
 
-    pdu.sequence += 1
-
-    return pdu.sequence
-
-
-def get_instance():
-    """Return SMPP class instance. Singleton design pattern -- let only one
-    instance exist"""
-
-    global smpp_instance
-
-    if smpp_instance is None:
-        smpp_instance = smpp_instance
-# TODO FIXXXXX
-
-    return smpp_instance
-
-
-#
-# Exceptions
-#
-
-class UnknownCommandError(Exception):
-    """Raised when unknown command ID is received"""
 

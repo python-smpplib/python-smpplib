@@ -24,11 +24,13 @@
 
 import struct
 import binascii
+import logging
 
-import smpp
-import pdu
-from ptypes import ostr, flag
+from . import pdu
+from . import exceptions
+from .ptypes import ostr, flag
 
+logger = logging.getLogger('smpplib.command')
 
 #
 # TON (Type Of Number) values
@@ -129,39 +131,6 @@ SMPP_VERSION_34 = 0x34
 
 
 #
-# SMPP commands map (human-readable -> numeric)
-#
-commands = {
-    'generic_nack': 0x80000000,
-    'bind_receiver': 0x00000001,
-    'bind_receiver_resp': 0x80000001,
-    'bind_transmitter': 0x00000002,
-    'bind_transmitter_resp': 0x80000002,
-    'query_sm': 0x00000003,
-    'query_sm_resp': 0x80000003,
-    'submit_sm': 0x00000004,
-    'submit_sm_resp': 0x80000004,
-    'deliver_sm': 0x00000005,
-    'deliver_sm_resp': 0x80000005,
-    'unbind': 0x00000006,
-    'unbind_resp': 0x80000006,
-    'replace_sm': 0x00000007,
-    'replace_sm_resp': 0x80000007,
-    'cancel_sm': 0x00000008,
-    'cancel_sm_resp': 0x80000008,
-    'bind_transceiver': 0x00000009,
-    'bind_transceiver_resp': 0x80000009,
-    'outbind': 0x0000000B,
-    'enquire_link': 0x00000015,
-    'enquire_link_resp': 0x80000015,
-    'submit_multi': 0x00000021,
-    'submit_multi_resp': 0x80000021,
-    'alert_notification': 0x00000102,
-    'data_sm': 0x00000103,
-    'data_sm_resp': 0x80000103
-}
-
-#
 # Optional parameters map
 #
 optional_params = {
@@ -212,35 +181,43 @@ optional_params = {
 }
 
 
-def get_command_name(code):
-    """Return command name by given code. If code is unknown, raise
-    UnkownCommandError exception"""
+def factory(command_name, **kwargs):
+    """Return instance of a specific command class"""
 
     try:
-        return commands.keys()[commands.values().index(code)]
-    except ValueError:
-        raise smpp.UnknownCommandError("Unknown SMPP command code " \
-                                       "'0x%x'" % code)
-
-
-def get_command_code(name):
-    """Return command code by given command name. If name is unknown,
-    raise UnknownCommandError exception"""
-
-    try:
-        return commands[name]
+        return {
+            'bind_transmitter': BindTransmitter,
+            'bind_transmitter_resp': BindTransmitterResp,
+            'bind_receiver': BindReceiver,
+            'bind_receiver_resp': BindReceiverResp,
+            'bind_transceiver': BindTransceiver,
+            'bind_transceiver_resp': BindTransceiverResp,
+            'data_sm': DataSM,
+            'data_sm_resp': DataSMResp,
+            'generic_nack': GenericNAck,
+            'submit_sm': SubmitSM,
+            'submit_sm_resp': SubmitSMResp,
+            'deliver_sm': DeliverSM,
+            'deliver_sm_resp': DeliverSMResp,
+            'unbind': Unbind,
+            'unbind_resp': UnbindResp,
+            'enquire_link': EnquireLink,
+            'enquire_link_resp': EnquireLinkResp,
+        }[command_name](command_name, **kwargs)
     except KeyError:
-        raise smpp.UnknownCommandError("Unknown SMPP command name '%s'" \
-            % name)
+        raise exceptions.UnknownCommandError(
+            'Command "{}" is not supported'.format(command_name))
+
 
 def get_optional_name(code):
     """Return optional_params name by given code. If code is unknown, raise
     UnkownCommandError exception"""
 
-    try:
-        return optional_params.keys()[optional_params.values().index(code)]
-    except ValueError:
-        raise smpp.UnknownCommandError("Unknown SMPP command code " \
+    for key, value in optional_params.iteritems():
+        if value == code:
+            return key
+
+    raise exceptions.UnknownCommandError("Unknown SMPP command code " \
                                        "'0x%x'" % code)
 
 
@@ -251,14 +228,14 @@ def get_optional_code(name):
     try:
         return optional_params[name]
     except KeyError:
-        raise smpp.UnknownCommandError("Unknown SMPP command name '%s'" \
+        raise exceptions.UnknownCommandError("Unknown SMPP command name '%s'" \
             % name)
-        
+
+
 class Command(pdu.PDU):
     """SMPP PDU Command class"""
 
     params = {}
-
 
     def __init__(self, command, **args):
         """Initialize"""
@@ -267,7 +244,7 @@ class Command(pdu.PDU):
 
         self.command = command
         if args.get('sequence') is None:
-            self.sequence_number = smpp.next_seq()
+            self.sequence_number = self._next_seq()
 
         self.status = pdu.SMPP_ESME_ROK
 
@@ -280,13 +257,13 @@ class Command(pdu.PDU):
 
     def _print_dict(self):
 
-        print '\n'.join([' -> '.join([str(key), str(value)]) for key, value in \
-            self.__dict__.items()])
+        logger.debug('\n'.join((' -> '.join((str(key), str(value))) for key, value in \
+            self.__dict__.items())))
 
 
     def _set_vars(self, **args):
 
-        for key, value in args.items():
+        for key, value in args.iteritems():
             if not hasattr(self, key) or getattr(self, key) is None:
                 setattr(self, key, value)
 
@@ -595,8 +572,8 @@ class Param:
             raise ValueError("Invalid parameter type: %s" \
                 % args.get('type'))
 
-        valid_keys = ['type', 'size', 'min', 'max', 'len_field']
-        for k in args.keys():
+        valid_keys = ('type', 'size', 'min', 'max', 'len_field')
+        for k in args:
             if k not in valid_keys:
                 raise KeyError("Key '%s' not allowed here" % k)
 
@@ -613,7 +590,6 @@ class Param:
 
         if args.has_key('len_field'):
             self.len_field = args.get('len_field')
-
 
 
 class BindTransmitter(Command):

@@ -585,6 +585,9 @@ class Param(object):
         if kwargs.has_key('len_field'):
             self.len_field = kwargs.get('len_field')
 
+    def __repr__(self):
+        return ''.join(('<Param of type ', self.type, '>'))
+
 
 class BindTransmitter(Command):
     """Bind as a transmitter command"""

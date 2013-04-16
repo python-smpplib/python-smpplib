@@ -149,6 +149,8 @@ class Client(object):
         log('Connecting to %s:%s...' % (self.host, self.port))
 
         try:
+            if self._socket is None:
+                self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.connect((self.host, self.port))
             self.state = SMPP_CLIENT_STATE_OPEN
         except socket.error:
@@ -161,6 +163,7 @@ class Client(object):
 
         self._socket.close()
         self.state = SMPP_CLIENT_STATE_CLOSED
+        self._socket = None
 
 
     def _bind(self, command_name, **kwargs):
@@ -235,7 +238,8 @@ class Client(object):
         except struct.error:
             #raise ConnectionError("Connection to server lost")
             log('Receive broken pdu...')
-            return False
+            raise exceptions.PDUError()
+
         raw_pdu = self._socket.recv(length - 4)
         raw_pdu = raw_len + raw_pdu
 
@@ -332,8 +336,8 @@ class Client(object):
         """
 
         ssm = smpp.make_pdu('submit_sm', client=self, **kwargs)
-
-        return self.send_pdu(ssm)
+        self.send_pdu(ssm)
+        return ssm
 
 #
 # Main block for testing

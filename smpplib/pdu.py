@@ -101,6 +101,7 @@ class PDU(object):
     length = 0
     command = None
     status = None
+    _sequence = None
 
 
     def __init__(self, client=default_client(), **kwargs):
@@ -111,11 +112,14 @@ class PDU(object):
             self._client = client
 
 
-    def get_sequence(self):
+    def _get_sequence(self):
         """Return global sequence number"""
-        return self._client.sequence
+        return self._sequence if self._sequence is not None else self._client.sequence
 
-    sequence = property(get_sequence)
+    def _set_sequence(self, sequence):
+        self._sequence = sequence
+
+    sequence = property(_get_sequence, _set_sequence)
 
     def _next_seq(self):
         """Return next sequence number"""
@@ -187,7 +191,7 @@ class PDU(object):
         self.length = chunks[0]
         self.command = extract_command(data)
         self.status = chunks[2]
-        self._client.sequence = chunks[3]
+        self.sequence = chunks[3]
 
         if len(data) > 16:
             self.parse_params(data[16:])

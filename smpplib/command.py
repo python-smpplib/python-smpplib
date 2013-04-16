@@ -244,7 +244,7 @@ class Command(pdu.PDU):
 
         self.command = command
         if kwargs.get('sequence') is None:
-            self.sequence_number = self._next_seq()
+            self.sequence = self._next_seq()
 
         self.status = pdu.SMPP_ESME_ROK
 

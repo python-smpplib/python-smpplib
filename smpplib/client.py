@@ -135,12 +135,13 @@ class Client(object):
 
 
     def __del__(self):
-        try:
-            self.unbind()
-        except (exceptions.PDUError, exceptions.ConnectionError), e:
-            logger.warning(e)
-            pass
-        self.disconnect()
+        if self._socket is not None:
+            try:
+                self.unbind()
+            except (exceptions.PDUError, exceptions.ConnectionError), e:
+                logger.warning(e)
+                pass
+            self.disconnect()
 
 
     def connect(self):

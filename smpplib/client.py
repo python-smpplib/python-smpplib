@@ -246,10 +246,9 @@ class Client(object):
 
         log('<<', binascii.b2a_hex(raw_pdu), len(raw_pdu), 'bytes')
 
-        cmd = pdu.extract_command(raw_pdu)
-        log('Read %s PDU' % cmd)
+        p = smpp.parse_pdu(raw_pdu, client=self)
 
-        p = smpp.parse_pdu(raw_pdu)
+        log('Read {} PDU'.format(p.command))
 
         if p.is_error():
             raise exceptions.PDUError('({}) {}: {}'.format(p.status, p.command,

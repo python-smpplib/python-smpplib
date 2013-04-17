@@ -1,7 +1,8 @@
 python-libsmpp
 ==============
 
-SMPP library for Python. Forked from [google code][https://code.google.com/p/smpplib/].
+SMPP library for Python. Forked from [google code](1).
+
 
 Example:
 ```python
@@ -51,6 +52,8 @@ from threading import Thread
 t = Thread(target=client.listen)
 t.start()
 ```
+
+[1] https://code.google.com/p/smpplib/
 
 
 

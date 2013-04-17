@@ -28,157 +28,10 @@ import logging
 
 from . import pdu
 from . import exceptions
+from . import consts
 from .ptypes import ostr, flag
 
 logger = logging.getLogger('smpplib.command')
-
-#
-# TON (Type Of Number) values
-#
-SMPP_TON_UNK = 0x00
-SMPP_TON_INTL = 0x01
-SMPP_TON_NATNL = 0x02
-SMPP_TON_NWSPEC = 0x03
-SMPP_TON_SBSCR = 0x04
-SMPP_TON_ALNUM = 0x05
-SMPP_TON_ABBREV = 0x06
-
-
-#
-# NPI (Numbering Plan Indicator) values
-#
-SMPP_NPI_UNK = 0x00  # Unknown
-SMPP_NPI_ISDN = 0x01  # ISDN (E163/E164)
-SMPP_NPI_DATA = 0x03  # Data (X.121)
-SMPP_NPI_TELEX = 0x04  # Telex (F.69)
-SMPP_NPI_LNDMBL = 0x06  # Land Mobile (E.212)
-SMPP_NPI_NATNL = 0x08  # National
-SMPP_NPI_PRVT = 0x09  # Private
-SMPP_NPI_ERMES = 0x0A  # ERMES
-SMPP_NPI_IP = 0x0E  # IPv4
-SMPP_NPI_WAP = 0x12  # WAP
-
-
-#
-# Encoding Types
-#
-SMPP_ENCODING_DEFAULT = 0x00  # SMSC Default
-SMPP_ENCODING_IA5 = 0x01  # IA5 (CCITT T.50)/ASCII (ANSI X3.4)
-SMPP_ENCODING_BINARY = 0x02  # Octet unspecified (8-bit binary)
-SMPP_ENCODING_ISO88591 = 0x03  # Latin 1 (ISO-8859-1)
-SMPP_ENCODING_BINARY2 = 0x04  # Octet unspecified (8-bit binary)
-SMPP_ENCODING_JIS = 0x05  # JIS (X 0208-1990)
-SMPP_ENCODING_ISO88595 = 0x06  # Cyrillic (ISO-8859-5)
-SMPP_ENCODING_ISO88598 = 0x07  # Latin/Hebrew (ISO-8859-8)
-SMPP_ENCODING_ISO10646 = 0x08  # UCS2 (ISO/IEC-10646)
-SMPP_ENCODING_PICTOGRAM = 0x09  # Pictogram Encoding
-SMPP_ENCODING_ISO2022JP = 0x0A  # ISO-2022-JP (Music Codes)
-SMPP_ENCODING_EXTJIS = 0x0D  # Extended Kanji JIS (X 0212-1990)
-SMPP_ENCODING_KSC5601 = 0x0E  # KS C 5601
-
-
-#
-# Language Types
-#
-SMPP_LANG_DEFAULT = 0x00
-SMPP_LANG_EN = 0x01
-SMPP_LANG_FR = 0x02
-SMPP_LANG_ES = 0x03
-SMPP_LANG_DE = 0x04
-
-
-#
-# ESM class values
-#
-SMPP_MSGMODE_DEFAULT = 0x00  # Default SMSC mode (e.g. Store and Forward)
-SMPP_MSGMODE_DATAGRAM = 0x01  # Datagram mode
-SMPP_MSGMODE_FORWARD = 0x02  # Forward (i.e. Transaction) mode
-SMPP_MSGMODE_STOREFORWARD = 0x03  # Store and Forward mode (use this to
-                                  # select Store and Forward mode if Default
-                                  # mode is not Store and Forward)
-
-
-SMPP_MSGTYPE_DEFAULT = 0x00  # Default message type (i.e. normal message)
-SMPP_MSGTYPE_DELIVERYACK = 0x08  # Message containts ESME Delivery
-                                 # Acknowledgement
-SMPP_MSGTYPE_USERACK = 0x10  # Message containts ESME Manual/User
-                             # Acknowledgement
-
-SMPP_GSMFEAT_NONE = 0x00  # No specific features selected
-SMPP_GSMFEAT_UDHI = 0x40  # UDHI Indicator (only relevant for MT msgs)
-SMPP_GSMFEAT_REPLYPATH = 0x80  # Set Reply Path (only relevant for GSM net)
-SMPP_GSMFEAT_UDHIREPLYPATH = 0xC0  # Set UDHI and Reply Path (for GSM net)
-
-#
-# SMPP Protocol ID
-#
-SMPP_PID_DEFAULT = 0x00 #Default
-SMPP_PID_RIP= 0x41    #Replace if present on handset
-
-#
-# SMPP User Data Header Information Element Identifier
-#
-SMPP_UDHIEIE_CONCATENATED = 0x00 #Concatenated short message, 8-bit ref
-SMPP_UDHIEIE_SPECIAL = 0x01 #
-SMPP_UDHIEIE_RESERVED = 0x02 #
-SMPP_UDHIEIE_PORT8 = 0x04 #
-SMPP_UDHIEIE_PORT16 = 0x04 #
-#
-# SMPP protocol versions
-#
-SMPP_VERSION_33 = 0x33
-SMPP_VERSION_34 = 0x34
-
-
-#
-# Optional parameters map
-#
-optional_params = {
-    'dest_addr_subunit': 0x0005,
-    'dest_network_type': 0x0006,
-    'dest_bearer_type': 0x0007,
-    'dest_telematics_id': 0x0008,
-    'source_addr_subunit': 0x000D,
-    'source_network_type': 0x000E,
-    'source_bearer_type': 0x000F,
-    'source_telematics_id': 0x010,
-    'qos_time_to_live': 0x0017,
-    'payload_type': 0x0019,
-    'additional_status_info_text': 0x01D,
-    'receipted_message_id': 0x001E,
-    'ms_msg_wait_facilities': 0x0030,
-    'privacy_indicator': 0x0201,
-    'source_subaddress': 0x0202,
-    'dest_subaddress': 0x0203,
-    'user_message_reference': 0x0204,
-    'user_response_code': 0x0205,
-    'source_port': 0x020A,
-    'destination_port': 0x020B,
-    'sar_msg_ref_num': 0x020C,
-    'language_indicator': 0x020D,
-    'sar_total_segments': 0x020E,
-    'sar_segment_seqnum': 0x020F,
-    'sc_interface_version': 0x0210,#0x1002,
-    'callback_num_pres_ind': 0x0302,
-    'callback_num_atag': 0x0303,
-    'number_of_messages': 0x0304,
-    'callback_num': 0x0381,
-    'dpf_result': 0x0420,
-    'set_dpf': 0x0421,
-    'ms_availability_status': 0x0422,
-    'network_error_code': 0x0423,
-    'message_payload': 0x0424,
-    'delivery_failure_reason': 0x0425,
-    'more_messages_to_send': 0x0426,
-    'message_state': 0x0427,
-    'ussd_service_op': 0x0501,
-    'display_time': 0x1201,
-    'sms_signal': 0x1203,
-    'ms_validity': 0x1204,
-    'alert_on_message_delivery': 0x130C,
-    'its_reply_type': 0x1380,
-    'its_session_info': 0x1383
-}
 
 
 def factory(command_name, **kwargs):
@@ -213,7 +66,7 @@ def get_optional_name(code):
     """Return optional_params name by given code. If code is unknown, raise
     UnkownCommandError exception"""
 
-    for key, value in optional_params.iteritems():
+    for key, value in consts.OPTIONAL_PARAMS.iteritems():
         if value == code:
             return key
 
@@ -226,7 +79,7 @@ def get_optional_code(name):
     raise UnknownCommandError exception"""
 
     try:
-        return optional_params[name]
+        return consts.OPTIONAL_PARAMS[name]
     except KeyError:
         raise exceptions.UnknownCommandError(
             'Unknown SMPP command name "{}"'.format(name))
@@ -246,7 +99,7 @@ class Command(pdu.PDU):
         if kwargs.get('sequence') is None:
             self.sequence = self._next_seq()
 
-        self.status = pdu.SMPP_ESME_ROK
+        self.status = consts.SMPP_ESME_ROK
 
         #if self.is_vendor() and self.vdefs:
         #    self.defs = self.defs + self.vdefs
@@ -455,12 +308,12 @@ class Command(pdu.PDU):
 
     def is_fixed(self, field):
         """Return True if field has fixed length, False otherwise"""
-        
+
         if hasattr(self.params[field], 'size'):
             return True
 
         return False
-        
+
 
     def parse_params(self, data):
         """Parse data into the object structure"""
@@ -487,7 +340,7 @@ class Command(pdu.PDU):
 
     def parse_optional_params(self, data):
         """Parse optional parameters.
-        
+
         Optional parameters have the following format:
             * type (2 bytes)
             * length (2 bytes)
@@ -498,7 +351,7 @@ class Command(pdu.PDU):
         #print len(data)
         dlen = len(data)#-4
         pos = 0
-        
+
         while pos < dlen:
             #print pos
             #unpacked_data1,unpacked_data2 = struct.unpack('2B', data[pos:pos+2]) 
@@ -506,7 +359,7 @@ class Command(pdu.PDU):
             #unpacked_data = struct.unpack('H', pack) 
             unpacked_data = struct.unpack('>H', data[pos:pos+2]) 
             type_code = int(''.join(map(str, unpacked_data)))
-            
+
             #print type_code
             #field=None
             field = get_optional_name(type_code)
@@ -514,11 +367,10 @@ class Command(pdu.PDU):
             #    field = \
             #        optional_params.keys()[\
             #            optional_params.values().index(type_code)]
-                
+
             #except ValueError:
             #    raise ValueError("Type '0x%x' not found" % type_code)
                 #print ("Type '0x%x' not found" % type_code)
-           
 
             #if field != None:
             pos += 2
@@ -544,7 +396,7 @@ class Command(pdu.PDU):
     def field_is_optional(self, field):
         """Return True if field is optional, False otherwise"""
 
-        if field in optional_params:
+        if field in consts.OPTIONAL_PARAMS:
             return True
         elif self.is_vendor():
             # FIXME: No vendor support yet
@@ -615,7 +467,7 @@ class BindTransmitter(Command):
         #self.__dict__.update({}.fromkeys(self.params.keys()))
         self._set_vars(**(dict.fromkeys(self.params.keys())))
 
-        self.interface_version = SMPP_VERSION_34
+        self.interface_version = consts.SMPP_VERSION_34
 
 
 class BindReceiver(BindTransmitter):
@@ -1085,6 +937,7 @@ class UnbindResp(Command):
     def __init__(self, command, **kwargs):
         """Initialize"""
         super(UnbindResp, self).__init__(command, **kwargs)
+
 
 class EnquireLink(Command):
     params = {}

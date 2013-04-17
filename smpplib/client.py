@@ -31,91 +31,15 @@ from . import smpp
 from . import pdu
 from . import command
 from . import exceptions
+from . import consts
 
 logger = logging.getLogger('smpplib.client')
-
-SMPP_CLIENT_STATE_CLOSED = 0
-SMPP_CLIENT_STATE_OPEN = 1
-SMPP_CLIENT_STATE_BOUND_TX = 2
-SMPP_CLIENT_STATE_BOUND_RX = 3
-SMPP_CLIENT_STATE_BOUND_TRX = 4
-
-
-command_states = {
-    'bind_transmitter': (SMPP_CLIENT_STATE_OPEN,),
-    'bind_transmitter_resp': (SMPP_CLIENT_STATE_OPEN,),
-    'bind_receiver': (SMPP_CLIENT_STATE_OPEN,),
-    'bind_receiver_resp': (SMPP_CLIENT_STATE_OPEN,),
-    'bind_transceiver': (SMPP_CLIENT_STATE_OPEN,),
-    'bind_transceiver_resp': (SMPP_CLIENT_STATE_OPEN,),
-    'outbind': (SMPP_CLIENT_STATE_OPEN,),
-    'unbind': (SMPP_CLIENT_STATE_BOUND_TX,
-               SMPP_CLIENT_STATE_BOUND_RX,
-               SMPP_CLIENT_STATE_BOUND_TRX,),
-    'unbind_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                    SMPP_CLIENT_STATE_BOUND_RX,
-                    SMPP_CLIENT_STATE_BOUND_TRX,),
-    'submit_sm': (SMPP_CLIENT_STATE_BOUND_TX,
-                  SMPP_CLIENT_STATE_BOUND_TRX,),
-    'submit_sm_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                       SMPP_CLIENT_STATE_BOUND_TRX,),
-    'submit_sm_multi': (SMPP_CLIENT_STATE_BOUND_TX,
-                        SMPP_CLIENT_STATE_BOUND_TRX,),
-    'submit_sm_multi_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                             SMPP_CLIENT_STATE_BOUND_TRX,),
-    'data_sm': (SMPP_CLIENT_STATE_BOUND_TX,
-                SMPP_CLIENT_STATE_BOUND_RX,
-                SMPP_CLIENT_STATE_BOUND_TRX,),
-    'data_sm_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                     SMPP_CLIENT_STATE_BOUND_RX,
-                     SMPP_CLIENT_STATE_BOUND_TRX,),
-    'deliver_sm': (SMPP_CLIENT_STATE_BOUND_RX,
-                   SMPP_CLIENT_STATE_BOUND_TRX,),
-    'deliver_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX,
-                        SMPP_CLIENT_STATE_BOUND_TRX,),
-    'query_sm': (SMPP_CLIENT_STATE_BOUND_RX,
-                 SMPP_CLIENT_STATE_BOUND_TRX,),
-    'query_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX,
-                      SMPP_CLIENT_STATE_BOUND_TRX,),
-    'cancel_sm': (SMPP_CLIENT_STATE_BOUND_RX,
-                  SMPP_CLIENT_STATE_BOUND_TRX,),
-    'cancel_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX,
-                       SMPP_CLIENT_STATE_BOUND_TRX,),
-    'replace_sm': (SMPP_CLIENT_STATE_BOUND_TX,),
-    'replace_sm_resp': (SMPP_CLIENT_STATE_BOUND_TX,),
-    'enquire_link': (SMPP_CLIENT_STATE_BOUND_TX,
-                     SMPP_CLIENT_STATE_BOUND_RX,
-                     SMPP_CLIENT_STATE_BOUND_TRX,),
-    'enquire_link_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                          SMPP_CLIENT_STATE_BOUND_RX,
-                          SMPP_CLIENT_STATE_BOUND_TRX,),
-    'alert_notification': (SMPP_CLIENT_STATE_BOUND_RX,
-                           SMPP_CLIENT_STATE_BOUND_TRX,),
-    'generic_nack': (SMPP_CLIENT_STATE_BOUND_TX,
-                     SMPP_CLIENT_STATE_BOUND_RX,
-                     SMPP_CLIENT_STATE_BOUND_TRX,)
-}
-
-state_setters = {
-    'bind_transmitter_resp': SMPP_CLIENT_STATE_BOUND_TX,
-    'bind_receiver_resp': SMPP_CLIENT_STATE_BOUND_RX,
-    'bind_transceiver_resp': SMPP_CLIENT_STATE_BOUND_TRX,
-    'unbind_resp': SMPP_CLIENT_STATE_OPEN
-}
-
-
-def log(*msg):
-    """Log message"""
-
-    msg = map(str, msg)
-
-    logger.debug(' '.join(msg))
 
 
 class Client(object):
     """SMPP client class"""
 
-    state = SMPP_CLIENT_STATE_CLOSED
+    state = consts.SMPP_CLIENT_STATE_CLOSED
 
     host = None
     port = None
@@ -139,31 +63,33 @@ class Client(object):
             try:
                 self.unbind()
             except (exceptions.PDUError, exceptions.ConnectionError), e:
-                logger.warning(e)
-                pass
+                if len(e.args > 1):
+                    logger.warning('(%d) %s. Ignored', e.args[1], e.args[0])
+                else:
+                    logger.warning('%s. Ignored', e)
             self.disconnect()
 
 
     def connect(self):
         """Connect to SMSC"""
 
-        log('Connecting to %s:%s...' % (self.host, self.port))
+        logger.info('Connecting to %s:%s...', self.host, self.port)
 
         try:
             if self._socket is None:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._socket.connect((self.host, self.port))
-            self.state = SMPP_CLIENT_STATE_OPEN
+            self.state = consts.SMPP_CLIENT_STATE_OPEN
         except socket.error:
             raise exceptions.ConnectionError("Connection refused")
 
 
     def disconnect(self):
         """Disconnect from the SMSC"""
-        log('Disconnecting...')
+        logger.info('Disconnecting...')
 
         self._socket.close()
-        self.state = SMPP_CLIENT_STATE_CLOSED
+        self.state = consts.SMPP_CLIENT_STATE_CLOSED
         self._socket = None
 
 
@@ -171,7 +97,7 @@ class Client(object):
         """Send bind_transmitter command to the SMSC"""
 
         if command_name in ('bind_receiver', 'bind_transceiver'):
-            log('I am receiver')
+            logger.debug('Receiver mode')
             self.receiver_mode = True
 
         #smppinst = smpp.get_instance()
@@ -211,15 +137,15 @@ class Client(object):
     def send_pdu(self, p):
         """Send PDU to the SMSC"""
 
-        if not self.state in command_states[p.command]:
+        if not self.state in consts.COMMAND_STATES[p.command]:
             raise exceptions.PDUError("Command %s failed: %s" \
-                % (p.command, exceptions.DESCRIPTIONS[exceptions.SMPP_ESME_RINVBNDSTS]))
+                % (p.command, consts.DESCRIPTIONS[consts.SMPP_ESME_RINVBNDSTS]))
 
-        log('Sending %s PDU' % (p.command))
+        logger.debug('Sending %s PDU', p.command)
 
         generated = p.generate()
 
-        log('>>', binascii.b2a_hex(generated), len(generated), 'bytes')
+        logger.debug('>>%s (%d bytes)', binascii.b2a_hex(generated), len(generated))
         res = self._socket.send(generated)
 
         return True
@@ -228,7 +154,7 @@ class Client(object):
     def read_pdu(self):
         """Read PDU from the SMSC"""
 
-        log('Waiting for PDU...')
+        logger.debug('Waiting for PDU...')
 
         raw_len = self._socket.recv(4)
         if raw_len == 0:
@@ -237,24 +163,23 @@ class Client(object):
         try:
             length = struct.unpack('>L', raw_len)[0]
         except struct.error:
-            #raise ConnectionError("Connection to server lost")
-            log('Receive broken pdu...')
+            logger.warning('Receive broken pdu...')
             raise exceptions.PDUError()
 
         raw_pdu = self._socket.recv(length - 4)
         raw_pdu = raw_len + raw_pdu
 
-        log('<<', binascii.b2a_hex(raw_pdu), len(raw_pdu), 'bytes')
+        logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
 
         p = smpp.parse_pdu(raw_pdu, client=self)
 
-        log('Read {} PDU'.format(p.command))
+        logger.debug('Read %s PDU', p.command)
 
         if p.is_error():
             raise exceptions.PDUError('({}) {}: {}'.format(p.status, p.command,
-                exceptions.DESCRIPTIONS[p.status]), int(p.status))
-        elif p.command in state_setters.keys():
-            self.state = state_setters[p.command]
+                consts.DESCRIPTIONS[p.status]), int(p.status))
+        elif p.command in consts.STATE_SETTERS:
+            self.state = consts.STATE_SETTERS[p.command]
 
         return p
 
@@ -276,7 +201,7 @@ class Client(object):
         ler = smpp.make_pdu('enquire_link_resp', client=self)
         #, message_id=args['pdu'].sm_default_msg_id)
         self.send_pdu(ler)
-        log("Link Enuiry...")
+        logger.debug("Link Enquiry...")
 
     def set_message_received_handler(self, func):
         """Set new function to handle message receive event"""
@@ -290,38 +215,46 @@ class Client(object):
     def message_received_handler(pdu, **kwargs):
         """Custom handler to process received message. May be overridden"""
 
-        log('Message received handler (Override me)')
+        logger.warning('Message received handler (Override me)')
 
     @staticmethod
     def message_sent_handler(pdu, **kwargs):
         """Called when SMPP server accept message (SUBMIT_SM_RESP). May be overridden"""
-        log('Message sent handler (Override me)')
+        logger.warning('Message sent handler (Override me)')
 
-    def listen(self):
+    def listen(self, ignore_error_codes=None):
         """Listen for PDUs and act"""
 
         while True:
             try:
-                p = self.read_pdu()
-            except socket.timeout:
-                log('Socket timeout, listening again')
-                p = smpp.make_pdu('enquire_link', client=self)
-                self.send_pdu(p)
-                continue
+                try:
+                    p = self.read_pdu()
+                except socket.timeout:
+                    logger.info('Socket timeout, listening again')
+                    p = smpp.make_pdu('enquire_link', client=self)
+                    self.send_pdu(p)
+                    continue
 
-            if p.command == 'unbind': #unbind_res
-                log('Unbind command received')
-                break
-            elif p.command == 'submit_sm_resp':
-                self.message_sent_handler(pdu=p)
-            elif p.command == 'deliver_sm':
-                self._message_received(p)
-            elif p.command == 'enquire_link':
-                self._enquire_link_received()
-            elif p.command == 'enquire_link_resp':
-                pass
-            else:
-                logger.warning('Unhandled SMPP command "%s"', p.command)
+                if p.command == 'unbind': #unbind_res
+                    logger.info('Unbind command received')
+                    break
+                elif p.command == 'submit_sm_resp':
+                    self.message_sent_handler(pdu=p)
+                elif p.command == 'deliver_sm':
+                    self._message_received(p)
+                elif p.command == 'enquire_link':
+                    self._enquire_link_received()
+                elif p.command == 'enquire_link_resp':
+                    pass
+                else:
+                    logger.warning('Unhandled SMPP command "%s"', p.command)
+            except exceptions.PDUError, e:
+                if ignore_error_codes \
+                        and len(e.args) > 1 \
+                        and e.args[1] in ignore_error_codes:
+                    logging.warning('(%d) %s. Ignored.' % (e.args[1], e.args[0]))
+                else:
+                    raise
 
 
     def send_message(self, **kwargs):

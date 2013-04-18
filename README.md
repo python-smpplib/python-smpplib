@@ -1,7 +1,8 @@
 python-libsmpp
 ==============
 
-SMPP library for Python
+SMPP library for Python. Forked from [google code](https://code.google.com/p/smpplib/).
+
 
 Example:
 ```python
@@ -15,13 +16,16 @@ import smpplib.consts
 # if you want to know what's happening
 logging.basicConfig(level='DEBUG')
 
-parts, encoding_flag, msg_type_flag = smpplib.gsm.make_parts(u'Привет мир!\n'*10)  # Two parts, UCS2, SMS with UDH
+# Two parts, UCS2, SMS with UDH
+parts, encoding_flag, msg_type_flag = smpplib.gsm.make_parts(u'Привет мир!\n'*10)
 
 client = smpplib.client.Client('example.com', SOMEPORTNUMBER)
 
 # Print when obtain message_id
-client.set_message_sent_handler(lambda pdu: sys.stdout.write('sent {} {}\n'.format(pdu.sequence, pdu.message_id)))
-client.set_message_received_handler(lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
+client.set_message_sent_handler(
+    lambda pdu: sys.stdout.write('sent {} {}\n'.format(pdu.sequence, pdu.message_id)))
+client.set_message_received_handler(
+    lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
 
 client.connect()
 client.bind_transceiver(system_id='login', password='secret')

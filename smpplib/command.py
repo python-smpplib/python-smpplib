@@ -58,7 +58,7 @@ def factory(command_name, **kwargs):
         }[command_name](command_name, **kwargs)
     except KeyError:
         raise exceptions.UnknownCommandError(
-            'Command "{}" is not supported'.format(command_name))
+            'Command "%s" is not supported' % command_name)
 
 
 def get_optional_name(code):
@@ -415,7 +415,7 @@ class Param(object):
 
         for param in ('size', 'min', 'max', 'len_field'):
             if param in kwargs:
-                self.size = kwargs[param]
+                setattr(self, param, kwargs[param])
 
     def __repr__(self):
         """Shows type of Param in console"""

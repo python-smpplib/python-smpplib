@@ -475,7 +475,7 @@ class BindTransmitterResp(Command):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(BindTransmitterResp, self).__init__(command, **kwargs)
+        super(BindTransmitterResp, self).__init__(command, need_sequence=False, **kwargs)
 
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -619,99 +619,62 @@ class SubmitSM(Command):
     #   'USSD' -- Unstructured Supplementary Services Data
     service_type = None
 
-    #
     # Type of Number for source address
-    #
     source_addr_ton = None
 
-    #
     # Numbering Plan Indicator for source address
-    #
     source_addr_npi = None
 
-    #
     # Address of SME which originated this message
-    #
     source_addr = None
 
-    #
     # TON for destination
-    #
     dest_addr_ton = None
 
-    #
     # NPI for destination
-    #
     dest_addr_npi = None
 
-    #
     # Destination address for this message
-    #
     destination_addr = None
 
-    #
     # Message mode and message type
-    #
     esm_class = None  # SMPP_MSGMODE_DEFAULT
 
-    #
     # Protocol Identifier
-    #
     protocol_id = None
 
-    #
     # Priority level of this message
-    #
     priority_flag = None
 
-    #
     # Message is to be scheduled by the SMSC for delivery
-    #
     schedule_delivery_time = None
 
-    #
     # Validity period of this message
-    #
     validity_period = None
 
-    #
-    # Indicator to signify if if an SMSC delivery receipt or and SME
+    # Indicator to signify if an SMSC delivery receipt or and SME
     # acknowledgement is required.
-    #
     registered_delivery = None
 
-    #
     # This flag indicates if submitted message should replace an existing
     # message
-    #
     replace_if_present_flag = None
 
-    #
     # Encoding scheme of the short messaege data
-    #
     data_coding = None  # SMPP_ENCODING_DEFAULT#ISO10646
 
-    #
-    # Indicates the short message to send from a list of predefined
+     # Indicates the short message to send from a list of predefined
     # ('canned') short messages stored on the SMSC
-    #
     sm_default_msg_id = None
 
-    #
     # Message length in octets
-    #
     sm_length = 0
 
-    #
     # Up to 254 octets of short message user data
-    #
     short_message = None
 
-    #
     # Optional are taken from params list and are set dynamically when
     # __init__ is called.
-    #
-
     params = {
         'service_type': Param(type=str, max=6),
         'source_addr_ton': Param(type=int, size=1),
@@ -807,7 +770,7 @@ class SubmitSMResp(Command):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(SubmitSMResp, self).__init__(command, **kwargs)
+        super(SubmitSMResp, self).__init__(command, need_sequence=False, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
 
@@ -875,7 +838,7 @@ class DeliverSM(SubmitSM):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(DeliverSM, self).__init__(command, **kwargs)
+        super(DeliverSM, self).__init__(command, need_sequence=False, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
 
@@ -885,7 +848,7 @@ class DeliverSMResp(SubmitSMResp):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(DeliverSMResp, self).__init__(command, **kwargs)
+        super(DeliverSMResp, self).__init__(command, need_sequence=False, **kwargs)
 
 
 class Unbind(Command):

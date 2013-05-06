@@ -848,7 +848,7 @@ class DeliverSMResp(SubmitSMResp):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(DeliverSMResp, self).__init__(command, need_sequence=False, **kwargs)
+        super(DeliverSMResp, self).__init__(command, **kwargs)
 
 
 class Unbind(Command):

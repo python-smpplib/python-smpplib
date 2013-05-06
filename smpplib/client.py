@@ -60,7 +60,7 @@ class Client(object):
             try:
                 self.unbind()
             except (exceptions.PDUError, exceptions.ConnectionError), e:
-                if len(e.args > 1):
+                if len(e.args) > 1:
                     logger.warning('(%d) %s. Ignored', e.args[1], e.args[0])
                 else:
                     logger.warning('%s. Ignored', e)

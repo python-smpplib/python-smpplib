@@ -76,7 +76,7 @@ DESCRIPTIONS = {
     SMPP_ESME_RINVMSGID: 'Invalid Message ID',
     SMPP_ESME_RBINDFAIL: 'Bind Failed',
     SMPP_ESME_RINVPASWD: 'Invalid Password',
-    SMPP_ESME_RINVSYSID : 'Invalid System ID',
+    SMPP_ESME_RINVSYSID: 'Invalid System ID',
     SMPP_ESME_RCANCELFAIL: 'Cancel SM Failed',
     SMPP_ESME_RREPLACEFAIL: 'Replace SM Failed',
     SMPP_ESME_RMSGQFUL: 'Message Queue is full',
@@ -84,7 +84,8 @@ DESCRIPTIONS = {
     SMPP_ESME_RINVNUMDESTS: 'Invalid number of destinations',
     SMPP_ESME_RINVDLNAME: 'Invalid Distribution List name',
     SMPP_ESME_RINVDESTFLAG: 'Invalid Destination Flag (submit_multi)',
-    SMPP_ESME_RINVSUBREP: 'Invalid Submit With Replace request (replace_if_present_flag set)',
+    SMPP_ESME_RINVSUBREP: 'Invalid Submit With Replace request '
+                        '(replace_if_present_flag set)',
     SMPP_ESME_RINVESMCLASS: 'Invalid esm_class field data',
     SMPP_ESME_RCNTSUBDL: 'Cannot submit to Distribution List',
     SMPP_ESME_RSUBMITFAIL: 'submit_sm or submit_multi failed',
@@ -94,8 +95,8 @@ DESCRIPTIONS = {
     SMPP_ESME_RINVDSTNPI: 'Invalid Destination address NPI',
     SMPP_ESME_RINVSYSTYP: 'Invalid system_type field',
     SMPP_ESME_RINVREPFLAG: 'Invalid replace_if_present flag',
-    SMPP_ESME_RINVNUMMSGS : 'Invalid number of messages',
-    SMPP_ESME_RTHROTTLED: 'Throttling error (ESME has exceeded allowed ' \
+    SMPP_ESME_RINVNUMMSGS: 'Invalid number of messages',
+    SMPP_ESME_RTHROTTLED: 'Throttling error (ESME has exceeded allowed '
                           'message limits)',
     SMPP_ESME_RINVSCHED: 'Invalid Scheduled Delivery Time',
     SMPP_ESME_RINVEXPIRY: 'Invalid message validity period (Expiry Time)',
@@ -199,17 +200,17 @@ SMPP_GSMFEAT_UDHIREPLYPATH = 0xC0  # Set UDHI and Reply Path (for GSM net)
 #
 # SMPP Protocol ID
 #
-SMPP_PID_DEFAULT = 0x00 #Default
-SMPP_PID_RIP= 0x41    #Replace if present on handset
+SMPP_PID_DEFAULT = 0x00  # Default
+SMPP_PID_RIP = 0x41  # Replace if present on handset
 
 #
 # SMPP User Data Header Information Element Identifier
 #
-SMPP_UDHIEIE_CONCATENATED = 0x00 #Concatenated short message, 8-bit ref
-SMPP_UDHIEIE_SPECIAL = 0x01 #
-SMPP_UDHIEIE_RESERVED = 0x02 #
-SMPP_UDHIEIE_PORT8 = 0x04 #
-SMPP_UDHIEIE_PORT16 = 0x04 #
+SMPP_UDHIEIE_CONCATENATED = 0x00  # Concatenated short message, 8-bit ref
+SMPP_UDHIEIE_SPECIAL = 0x01
+SMPP_UDHIEIE_RESERVED = 0x02
+SMPP_UDHIEIE_PORT8 = 0x04
+SMPP_UDHIEIE_PORT16 = 0x04
 
 #
 # SMPP protocol versions
@@ -304,7 +305,7 @@ OPTIONAL_PARAMS = {
     'language_indicator': 0x020D,
     'sar_total_segments': 0x020E,
     'sar_segment_seqnum': 0x020F,
-    'sc_interface_version': 0x0210,#0x1002,
+    'sc_interface_version': 0x0210,  # 0x1002,
     'callback_num_pres_ind': 0x0302,
     'callback_num_atag': 0x0303,
     'number_of_messages': 0x0304,

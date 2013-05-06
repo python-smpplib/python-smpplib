@@ -23,64 +23,11 @@
 """PDU module"""
 
 import struct
-import binascii
 
 from . import command_codes
-from . import exceptions
+from . import consts
 
 SMPP_ESME_ROK = 0x00000000
-
-#
-# Optional parameters map
-#
-optional_params = {
-    'dest_addr_subunit': 0x0005,
-    'dest_network_type': 0x0006,
-    'dest_bearer_type': 0x0007,
-    'dest_telematics_id': 0x0008,
-    'source_addr_subunit': 0x000D,
-    'source_network_type': 0x000E,
-    'source_bearer_type': 0x000F,
-    'source_telematics_id': 0x010,
-    'qos_time_to_live': 0x0017,
-    'payload_type': 0x0019,
-    'additional_status_info_text': 0x01D,
-    'receipted_message_id': 0x001E,
-    'ms_msg_wait_facilities': 0x0030,
-    'privacy_indicator': 0x0201,
-    'source_subaddress': 0x0202,
-    'dest_subaddress': 0x0203,
-    'user_message_reference': 0x0204,
-    'user_response_code': 0x0205,
-    'source_port': 0x020A,
-    'destination_port': 0x020B,
-    'sar_msg_ref_num': 0x020C,
-    'language_indicator': 0x020D,
-    'sar_total_segments': 0x020E,
-    'sar_segment_seqnum': 0x020F,
-    'sc_interface_version': 0x0210,#0x1002,
-    'callback_num_pres_ind': 0x0302,
-    'callback_num_atag': 0x0303,
-    'number_of_messages': 0x0304,
-    'callback_num': 0x0381,
-    'dpf_result': 0x0420,
-    'set_dpf': 0x0421,
-    'ms_availability_status': 0x0422,
-    'network_error_code': 0x0423,
-    'message_payload': 0x0424,
-    'delivery_failure_reason': 0x0425,
-    'more_messages_to_send': 0x0426,
-    'message_state': 0x0427,
-    'ussd_service_op': 0x0501,
-    'display_time': 0x1201,
-    'sms_signal': 0x1203,
-    'ms_validity': 0x1204,
-    'alert_on_message_delivery': 0x130C,
-    'its_reply_type': 0x1380,
-    'its_session_info': 0x1383
-}
-
-sequence = 0
 
 
 def extract_command(pdu):
@@ -95,6 +42,7 @@ class default_client(object):
     """Dummy client"""
     sequence = 0
 
+
 class PDU(object):
     """PDU class"""
 
@@ -103,7 +51,6 @@ class PDU(object):
     status = None
     _sequence = None
 
-
     def __init__(self, client=default_client(), **kwargs):
         """Singleton dummy client will be used if ommited"""
         if client is None:
@@ -111,12 +58,13 @@ class PDU(object):
         else:
             self._client = client
 
-
     def _get_sequence(self):
         """Return global sequence number"""
-        return self._sequence if self._sequence is not None else self._client.sequence
+        return self._sequence if self._sequence is not None else \
+            self._client.sequence
 
     def _set_sequence(self, sequence):
+        """Setter for sequence"""
         self._sequence = sequence
 
     sequence = property(_get_sequence, _set_sequence)
@@ -124,38 +72,27 @@ class PDU(object):
     def _next_seq(self):
         """Return next sequence number"""
         self._client.sequence += 1
-
         return self._client.sequence
 
     def is_vendor(self):
         """Return True if this is a vendor PDU, False otherwise"""
-
         return hasattr(self, 'vendor')
-
 
     def is_request(self):
         """Return True if this is a request PDU, False otherwise"""
-
         return not self.is_response()
-
 
     def is_response(self):
         """Return True if this is a response PDU, False otherwise"""
-
         if command_codes.get_command_code(self.command) & 0x80000000:
             return True
-
         return False
-
 
     def is_error(self):
         """Return True if this is an error response, False otherwise"""
-
         if self.status != SMPP_ESME_ROK:
             return True
-
         return False
-
 
     def get_status_desc(self, status=None):
         """Return status description"""
@@ -164,7 +101,7 @@ class PDU(object):
             status = self.status
 
         try:
-            desc = exceptions.DESCRIPTIONS[status]
+            desc = consts.DESCRIPTIONS[status]
         except KeyError:
             return "Description for status 0x%x not found!" % status
 
@@ -196,12 +133,9 @@ class PDU(object):
         if len(data) > 16:
             self.parse_params(data[16:])
 
-
-    def _unpack(self, format, data):
+    def _unpack(self, fmt, data):
         """Unpack values. Uses struct.unpack. TODO: remove this"""
-
-        return struct.unpack(format, data)
-
+        return struct.unpack(fmt, data)
 
     def generate(self):
         """Generate raw PDU"""
@@ -216,4 +150,3 @@ class PDU(object):
                              self.status, self.sequence)
 
         return header + body
-

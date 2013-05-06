@@ -22,8 +22,8 @@
 
 """SMPP module"""
 
-import pdu
-import command
+from . import pdu
+from . import command
 
 
 def make_pdu(command_name, **kwargs):
@@ -46,7 +46,3 @@ def parse_pdu(data, **kwargs):
     new_pdu.parse(data)
 
     return new_pdu
-
-
-
-

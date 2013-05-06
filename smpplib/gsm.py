@@ -12,10 +12,13 @@ gsm = (u"@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !\"#¤%
 ext = (u"````````````````````^```````````````````{}`````\\````````````[~]`"
        u"|````````````````````````````````````€``````````````````````````")
 
+
 class EncodeError(ValueError):
     """Raised if text cannot be represented in gsm 7-bit encoding"""
 
+
 def gsm_encode(plaintext, hex=False):
+    """Replace non-GSM ASCII symbols"""
     res = ""
     for c in plaintext:
         idx = gsm.find(c)
@@ -41,7 +44,7 @@ def make_parts(text):
     except EncodeError:
         encoding = consts.SMPP_ENCODING_ISO10646
         need_split = len(text) > consts.UCS2_SIZE
-        partsize =  consts.UCS2_MP_SIZE
+        partsize = consts.UCS2_MP_SIZE
         encode = lambda s: s.encode('utf-16-be')
 
     esm_class = consts.SMPP_MSGTYPE_DEFAULT
@@ -59,10 +62,9 @@ def make_parts(text):
         for start in starts:
             parts.append(''.join(('\x05\x00\x03', chr(uid),
                                   chr(len(starts)), chr(ipart),
-                                  encode(text[start:start+partsize]))))
+                                  encode(text[start:start + partsize]))))
             ipart += 1
     else:
         parts = (encode(text),)
 
     return parts, encoding, esm_class
-

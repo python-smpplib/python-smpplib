@@ -23,7 +23,6 @@
 """SMPP Commands module"""
 
 import struct
-import binascii
 import logging
 
 from . import pdu
@@ -82,7 +81,7 @@ def get_optional_code(name):
         return consts.OPTIONAL_PARAMS[name]
     except KeyError:
         raise exceptions.UnknownCommandError(
-            'Unknown SMPP command name "{}"'.format(name))
+            'Unknown SMPP command name "%s"' % name)
 
 
 class Command(pdu.PDU):
@@ -90,13 +89,13 @@ class Command(pdu.PDU):
 
     params = {}
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command, need_sequence=True, **kwargs):
         """Initialize"""
 
         super(Command, self).__init__(**kwargs)
 
         self.command = command
-        if kwargs.get('sequence') is None:
+        if need_sequence and (kwargs.get('sequence') is None):
             self.sequence = self._next_seq()
 
         self.status = consts.SMPP_ESME_ROK
@@ -107,13 +106,11 @@ class Command(pdu.PDU):
         #self.__dict__.update(**(args))
         self._set_vars(**kwargs)
 
-
     def _set_vars(self, **kwargs):
-
+        """set attributes accordingly to kwargs"""
         for key, value in kwargs.iteritems():
             if not hasattr(self, key) or getattr(self, key) is None:
                 setattr(self, key, value)
-
 
     def generate_params(self):
         """Generate binary data from the object"""
@@ -130,13 +127,16 @@ class Command(pdu.PDU):
             if self.field_is_optional(field):
                 if param.type is int:
                     value = self._generate_int_tlv(field)
-                    if value: body += value
+                    if value:
+                        body += value
                 elif param.type is str:
                     value = self._generate_string_tlv(field)
-                    if value: body += value
+                    if value:
+                        body += value
                 elif param.type is ostr:
                     value = self._generate_ostring_tlv(field)
-                    if value: body += value
+                    if value:
+                        body += value
             else:
                 if param.type is int:
                     value = self._generate_int(field)
@@ -146,24 +146,23 @@ class Command(pdu.PDU):
                     body += value
                 elif param.type is ostr:
                     value = self._generate_ostring(field)
-                    if value: body += value
+                    if value:
+                        body += value
             #print value
         return body
 
-        
     def _generate_opt_header(self, field):
         """Generate a header for an optional parameter"""
 
         raise NotImplementedError('Vendors not supported')
 
-
     def _generate_int(self, field):
         """Generate integer value"""
 
-        format = self._pack_format(field)
+        fmt = self._pack_format(field)
         data = getattr(self, field)
         if data:
-            return struct.pack(format, data)
+            return struct.pack(fmt, data)
         else:
             return chr(0)  # null terminator
 
@@ -177,7 +176,7 @@ class Command(pdu.PDU):
             value = field_value.ljust(size, chr(0))
         elif hasattr(self.params[field], 'max'):
             if len(field_value or '') > self.params[field].max:
-                field_value = field_value[0:self.params[field].max-1]
+                field_value = field_value[0:self.params[field].max - 1]
 
             if field_value:
                 value = field_value + chr(0)
@@ -187,68 +186,65 @@ class Command(pdu.PDU):
         setattr(self, field, field_value)
         return value
 
-
     def _generate_ostring(self, field):
         """Generate octet string value (no null terminator)"""
 
         value = getattr(self, field)
         if value:
             return value
-        else: return None #chr(0)
-        
+        else:
+            return None  # chr(0)
+
     def _generate_int_tlv(self, field):
         """Generate integer value"""
-        format = self._pack_format(field)
+        fmt = self._pack_format(field)
         data = getattr(self, field)
         field_code = get_optional_code(field)
         field_length = self.params[field].size
         value = None
         if data:
-            value = struct.pack(">HH"+format, field_code,field_length,data)
+            value = struct.pack(">HH" + fmt, field_code, field_length, data)
             #print binascii.b2a_hex(value)
         return value
-
 
     def _generate_string_tlv(self, field):
         """Generate string value"""
 
         field_value = getattr(self, field)
         field_code = get_optional_code(field)
-        
+
         if hasattr(self.params[field], 'size'):
             size = self.params[field].size
             fvalue = field_value.ljust(size, chr(0))
-            value = struct.pack(">HH", field_code,size)+fvalue
+            value = struct.pack(">HH", field_code, size) + fvalue
         elif hasattr(self.params[field], 'max'):
             if len(field_value or '') > self.params[field].max:
-                field_value = field_value[0:self.params[field].max-1]
+                field_value = field_value[0:self.params[field].max - 1]
 
             if field_value:
                 field_length = len(field_value)
                 fvalue = field_value + chr(0)
-                value = struct.pack(">HH", field_code, field_length)+fvalue
+                value = struct.pack(">HH", field_code, field_length) + fvalue
                 #print binascii.b2a_hex(value)
             else:
-                value = None #chr(0)
+                value = None  # chr(0)
         #setattr(self, field, field_value)
         return value
-
 
     def _generate_ostring_tlv(self, field):
         """Generate octet string value (no null terminator)"""
         try:
             field_value = getattr(self, field)
-        except: 
+        except:
             return None
         field_code = get_optional_code(field)
-        
+
         value = None
         if field_value:
             field_length = len(field_value)
-            value = struct.pack(">HH",field_code, field_length) + field_value
+            value = struct.pack(">HH", field_code, field_length) + field_value
             #print binascii.b2a_hex(value)
         return value
-
 
     def _pack_format(self, field):
         """Return format type"""
@@ -261,7 +257,6 @@ class Command(pdu.PDU):
             return 'L'
         return None
 
-
     def _parse_int(self, field, data, pos):
         """Parse fixed-length chunk from a PDU.
         Return (data, pos) tuple."""
@@ -269,13 +264,12 @@ class Command(pdu.PDU):
         size = self.params[field].size
         field_value = getattr(self, field)
         unpacked_data = self._unpack(self._pack_format(field),
-                                     data[pos:pos+size])
+            data[pos:pos + size])
         field_value = ''.join(map(str, unpacked_data))
         setattr(self, field, field_value)
         pos += size
 
         return data, pos
-
 
     def _parse_string(self, field, data, pos):
         """Parse variable-length string from a PDU.
@@ -284,36 +278,32 @@ class Command(pdu.PDU):
         end = data.find(chr(0), pos)
         length = end - pos
 
-        field_value = data[pos:pos+length]
+        field_value = data[pos:pos + length]
         setattr(self, field, field_value)
         pos += length + 1
 
         return data, pos
 
-
     def _parse_ostring(self, field, data, pos, length=None):
         """Parse an octet string from a PDU.
         Return (data, pos) tuple."""
-        
+
         if length is None:
             length_field = self.params[field].len_field
             length = int(getattr(self, length_field))
             #print length_field, type(length_field), length, type(length_field)
 
-        setattr(self, field, data[pos:pos+length])
+        setattr(self, field, data[pos:pos + length])
         pos += length
 
         return data, pos
-
 
     def is_fixed(self, field):
         """Return True if field has fixed length, False otherwise"""
 
         if hasattr(self.params[field], 'size'):
             return True
-
         return False
-
 
     def parse_params(self, data):
         """Parse data into the object structure"""
@@ -337,7 +327,6 @@ class Command(pdu.PDU):
             #None
             self.parse_optional_params(data[pos:])
 
-
     def parse_optional_params(self, data):
         """Parse optional parameters.
 
@@ -349,15 +338,16 @@ class Command(pdu.PDU):
 
         #print binascii.b2a_hex(data)
         #print len(data)
-        dlen = len(data)#-4
+        dlen = len(data)
         pos = 0
 
         while pos < dlen:
             #print pos
-            #unpacked_data1,unpacked_data2 = struct.unpack('2B', data[pos:pos+2]) 
+            #unpacked_data1,unpacked_data2 = struct.unpack('2B',
+            #     data[pos:pos+2])
             #pack = struct.pack(unpacked_data2,unpacked_data1)
-            #unpacked_data = struct.unpack('H', pack) 
-            unpacked_data = struct.unpack('>H', data[pos:pos+2]) 
+            #unpacked_data = struct.unpack('H', pack)
+            unpacked_data = struct.unpack('>H', data[pos:pos + 2])
             type_code = int(''.join(map(str, unpacked_data)))
 
             #print type_code
@@ -375,7 +365,8 @@ class Command(pdu.PDU):
             #if field != None:
             pos += 2
 
-            length = int(''.join(map(str, struct.unpack('!H', data[pos:pos+2]))))
+            length = int(''.join(map(str, struct.unpack('!H',
+                data[pos:pos + 2]))))
             pos += 2
             param = self.params[field]
 
@@ -386,12 +377,9 @@ class Command(pdu.PDU):
             elif param.type is ostr:
                 data, pos = self._parse_ostring(field, data, pos, length)
 
-
     def field_exists(self, field):
         """Return True if field exists, False otherwise"""
-
         return hasattr(self.params, field)
-
 
     def field_is_optional(self, field):
         """Return True if field is optional, False otherwise"""
@@ -411,11 +399,11 @@ class Param(object):
     def __init__(self, **kwargs):
         """Initialize"""
 
-        if not kwargs.has_key('type'):
+        if 'type' not in kwargs:
             raise KeyError('Parameter Type not defined')
 
         if kwargs.get('type') not in (int, str, ostr, flag):
-            raise ValueError("Invalid parameter type: %s" \
+            raise ValueError("Invalid parameter type: %s"
                 % kwargs.get('type'))
 
         valid_keys = ('type', 'size', 'min', 'max', 'len_field')
@@ -425,19 +413,12 @@ class Param(object):
 
         self.type = kwargs.get('type')
 
-        if kwargs.has_key('size'):
-            self.size = kwargs.get('size')
-
-        if kwargs.has_key('min'):
-            self.min = kwargs.get('min')
-
-        if kwargs.has_key('max'):
-            self.max = kwargs.get('max')
-
-        if kwargs.has_key('len_field'):
-            self.len_field = kwargs.get('len_field')
+        for param in ('size', 'min', 'max', 'len_field'):
+            if param in kwargs:
+                self.size = kwargs[param]
 
     def __repr__(self):
+        """Shows type of Param in console"""
         return ''.join(('<Param of ', str(self.type), '>'))
 
 
@@ -455,32 +436,30 @@ class BindTransmitter(Command):
     }
 
     # Order is important, but params dictionary is unordered
-    params_order = ('system_id', 'password', 'system_type', 
+    params_order = ('system_id', 'password', 'system_type',
         'interface_version', 'addr_ton', 'addr_npi', 'address_range')
 
-    
     def __init__(self, command, **kwargs):
         """Initialize"""
 
-        super(BindTransmitter, self).__init__(command, **kwargs)
+        super(BindTransmitter, self).__init__(command, need_sequence=False,
+            **kwargs)
 
-        #self.__dict__.update({}.fromkeys(self.params.keys()))
-        self._set_vars(**(dict.fromkeys(self.params.keys())))
-
+        self._set_vars(**(dict.fromkeys(self.params)))
         self.interface_version = consts.SMPP_VERSION_34
 
 
 class BindReceiver(BindTransmitter):
+    """Bind as a receiver command"""
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(BindReceiver, self).__init__(command, **kwargs)
 
 
 class BindTransceiver(BindTransmitter):
+    """Bind as reciever and transmitter command"""
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(BindTransceiver, self).__init__(command, **kwargs)
 
 
@@ -498,20 +477,20 @@ class BindTransmitterResp(Command):
         """Initialize"""
         super(BindTransmitterResp, self).__init__(command, **kwargs)
 
-        self._set_vars(**(dict.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params)))
 
 
 class BindReceiverResp(BindTransmitterResp):
+    """Response for bind as a reciever command"""
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(BindReceiverResp, self).__init__(command, **kwargs)
 
 
 class BindTransceiverResp(BindTransmitterResp):
+    """Response for bind as a transceiver command"""
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(BindTransceiverResp, self).__init__(command, **kwargs)
 
 
@@ -573,7 +552,7 @@ class DataSM(Command):
     params_order = ('service_type', 'source_addr_ton', 'source_addr_npi',
         'source_addr', 'dest_addr_ton', 'dest_addr_npi', 'destination_addr',
         'esm_class', 'registered_delivery', 'data_coding'
-        
+
         # Optional params:
         'source_port', 'source_addr_subunit', 'source_network_type',
         'source_bearer_type', 'source_telematics_id', 'destination_port',
@@ -591,11 +570,8 @@ class DataSM(Command):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(DataSM, self).__init__(command, **kwargs)
-
-        #self.__dict__.update({}.fromkeys(self.params.keys()))
-        self._set_vars(**(dict.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params)))
 
 
 class DataSMResp(Command):
@@ -621,12 +597,13 @@ class GenericNAck(Command):
     def __init__(self, command, **kwargs):
         """Initialize"""
 
-        super(GenericNAck, self).__init__(command, **kwargs)
+        super(GenericNAck, self).__init__(command, need_sequence=False,
+            **kwargs)
 
 
 class SubmitSM(Command):
     """submit_sm command class
-    
+
     This command is used by an ESME to submit short message to the SMSC.
     submit_sm PDU does not support the transaction mode."""
 
@@ -675,7 +652,7 @@ class SubmitSM(Command):
     #
     # Message mode and message type
     #
-    esm_class = None#SMPP_MSGMODE_DEFAULT
+    esm_class = None  # SMPP_MSGMODE_DEFAULT
 
     #
     # Protocol Identifier
@@ -712,7 +689,7 @@ class SubmitSM(Command):
     #
     # Encoding scheme of the short messaege data
     #
-    data_coding = None #SMPP_ENCODING_DEFAULT#ISO10646
+    data_coding = None  # SMPP_ENCODING_DEFAULT#ISO10646
 
     #
     # Indicates the short message to send from a list of predefined
@@ -731,7 +708,7 @@ class SubmitSM(Command):
     short_message = None
 
     #
-    # Optional are taken from params list and are set dynamically when 
+    # Optional are taken from params list and are set dynamically when
     # __init__ is called.
     #
 
@@ -753,7 +730,7 @@ class SubmitSM(Command):
         'data_coding': Param(type=int, size=1),
         'sm_default_msg_id': Param(type=int, size=1),
         'sm_length': Param(type=int, size=1),
-        'short_message': Param(type=ostr, max=254, 
+        'short_message': Param(type=ostr, max=254,
                                len_field='sm_length'),
         # Optional params
         'user_message_reference': Param(type=int, size=2),
@@ -804,14 +781,10 @@ class SubmitSM(Command):
         'language_indicator', 'its_reply_type', 'its_session_info',
         'ussd_service_op')
 
-    
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(SubmitSM, self).__init__(command, **kwargs)
-
-        self._set_vars(**(dict.fromkeys(self.params.keys())))
-
+        self._set_vars(**(dict.fromkeys(self.params)))
 
     def prep(self):
         """Prepare to generate binary data"""
@@ -834,14 +807,13 @@ class SubmitSMResp(Command):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(SubmitSMResp, self).__init__(command, **kwargs)
-
-        self._set_vars(**(dict.fromkeys(self.params.keys())))
+        self._set_vars(**(dict.fromkeys(self.params)))
 
 
 class DeliverSM(SubmitSM):
-    """deliver_sm command class, similar to submit_sm but has different optional params"""
+    """deliver_sm command class, similar to submit_sm
+    but has different optional params"""
 
     params = {
         'service_type': Param(type=str, max=6),
@@ -861,7 +833,7 @@ class DeliverSM(SubmitSM):
         'data_coding': Param(type=int, size=1),
         'sm_default_msg_id': Param(type=int, size=1),
         'sm_length': Param(type=int, size=1),
-        'short_message': Param(type=ostr, max=254, 
+        'short_message': Param(type=ostr, max=254,
                                len_field='sm_length'),
 
         # Optional params
@@ -884,7 +856,7 @@ class DeliverSM(SubmitSM):
         'message_state': Param(type=int, size=1),
         'receipted_message_id': Param(type=str, max=65),
         }
-    
+
     params_order = ('service_type', 'source_addr_ton', 'source_addr_npi',
         'source_addr', 'dest_addr_ton', 'dest_addr_npi',
         'destination_addr', 'esm_class', 'protocol_id', 'priority_flag',
@@ -893,27 +865,26 @@ class DeliverSM(SubmitSM):
         'sm_length', 'short_message',
 
         # Optional params
-        'user_message_reference', 'source_port', 'destination_port', 'sar_msg_ref_num',
-        'sar_total_segments', 'sar_segment_seqnum', 'user_response_code',
-        'privacy_indicator', 'payload_type', 'message_payload',
-        'callback_num','source_subaddress',
-        'dest_subaddress','language_indicator', 'its_session_info', 
-        'network_error_code','message_state','receipted_message_id')
-    
+        'user_message_reference', 'source_port', 'destination_port',
+        'sar_msg_ref_num', 'sar_total_segments', 'sar_segment_seqnum',
+        'user_response_code', 'privacy_indicator',
+        'payload_type', 'message_payload',
+        'callback_num', 'source_subaddress',
+        'dest_subaddress', 'language_indicator', 'its_session_info',
+        'network_error_code', 'message_state', 'receipted_message_id')
+
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(DeliverSM, self).__init__(command, **kwargs)
+        self._set_vars(**(dict.fromkeys(self.params)))
 
-        self._set_vars(**(dict.fromkeys(self.params.keys())))
 
-
-class DeliverSMResp(SubmitSMResp): 
+class DeliverSMResp(SubmitSMResp):
     """deliver_sm_response response class, same as submit_sm"""
     message_id = None
+
     def __init__(self, command, **kwargs):
         """Initialize"""
-
         super(DeliverSMResp, self).__init__(command, **kwargs)
 
 
@@ -925,7 +896,7 @@ class Unbind(Command):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(Unbind, self).__init__(command, **kwargs)
+        super(Unbind, self).__init__(command, need_sequence=False, **kwargs)
 
 
 class UnbindResp(Command):
@@ -936,22 +907,27 @@ class UnbindResp(Command):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(UnbindResp, self).__init__(command, **kwargs)
+        super(UnbindResp, self).__init__(command, need_sequence=False,
+            **kwargs)
 
 
 class EnquireLink(Command):
+    """Enquire link command"""
     params = {}
     params_order = ()
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(EnquireLink, self).__init__(command, **kwargs)
+        super(EnquireLink, self).__init__(command, need_sequence=False,
+            **kwargs)
 
 
 class EnquireLinkResp(Command):
+    """Enquire link command response"""
     params = {}
     params_order = ()
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(EnquireLinkResp, self).__init__(command, **kwargs)
+        super(EnquireLinkResp, self).__init__(command, need_sequence=False,
+            **kwargs)

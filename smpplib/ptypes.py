@@ -29,9 +29,7 @@ class OctetStringType:
 ostr = OctetStringType
 
 
-
 class FlagType:
     """Flag type (identifier only)"""
-    
-flag = FlagType
 
+flag = FlagType

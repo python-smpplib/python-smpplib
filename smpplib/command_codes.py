@@ -42,7 +42,7 @@ def get_command_name(code):
         if value == code:
             return key
 
-    raise exceptions.UnknownCommandError("Unknown SMPP command code " \
+    raise exceptions.UnknownCommandError("Unknown SMPP command code "
                                    "'0x%x'" % code)
 
 
@@ -53,6 +53,5 @@ def get_command_code(name):
     try:
         return commands[name]
     except KeyError:
-        raise exceptions.UnknownCommandError("Unknown SMPP command name '%s'" \
+        raise exceptions.UnknownCommandError("Unknown SMPP command name '%s'"
             % name)
-

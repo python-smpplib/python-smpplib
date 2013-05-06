@@ -28,8 +28,6 @@ import binascii
 import logging
 
 from . import smpp
-from . import pdu
-from . import command
 from . import exceptions
 from . import consts
 
@@ -47,7 +45,6 @@ class Client(object):
     _socket = None
     sequence = 0
 
-
     def __init__(self, host, port, timeout=5):
         """Initialize"""
 
@@ -57,8 +54,8 @@ class Client(object):
         self._socket.settimeout(timeout)
         self.receiver_mode = False
 
-
     def __del__(self):
+        """Disconnect when client object is destroyed"""
         if self._socket is not None:
             try:
                 self.unbind()
@@ -68,7 +65,6 @@ class Client(object):
                 else:
                     logger.warning('%s. Ignored', e)
             self.disconnect()
-
 
     def connect(self):
         """Connect to SMSC"""
@@ -83,7 +79,6 @@ class Client(object):
         except socket.error:
             raise exceptions.ConnectionError("Connection refused")
 
-
     def disconnect(self):
         """Disconnect from the SMSC"""
         logger.info('Disconnecting...')
@@ -91,7 +86,6 @@ class Client(object):
         self._socket.close()
         self.state = consts.SMPP_CLIENT_STATE_CLOSED
         self._socket = None
-
 
     def _bind(self, command_name, **kwargs):
         """Send bind_transmitter command to the SMSC"""
@@ -103,53 +97,45 @@ class Client(object):
         #smppinst = smpp.get_instance()
         p = smpp.make_pdu(command_name, client=self, **kwargs)
 
-        res = self.send_pdu(p)
+        self.send_pdu(p)
         return self.read_pdu()
-
 
     def bind_transmitter(self, **kwargs):
         """Bind as a transmitter"""
-
         return self._bind('bind_transmitter', **kwargs)
-
 
     def bind_receiver(self, **kwargs):
         """Bind as a receiver"""
-
         return self._bind('bind_receiver', **kwargs)
-
 
     def bind_transceiver(self, **kwargs):
         """Bind as a transmitter and receiver at once"""
-
         return self._bind('bind_transceiver', **kwargs)
-
 
     def unbind(self):
         """Unbind from the SMSC"""
 
         p = smpp.make_pdu('unbind', client=self)
 
-        res = self.send_pdu(p)
+        self.send_pdu(p)
         return self.read_pdu()
-
 
     def send_pdu(self, p):
         """Send PDU to the SMSC"""
 
         if not self.state in consts.COMMAND_STATES[p.command]:
-            raise exceptions.PDUError("Command %s failed: %s" \
-                % (p.command, consts.DESCRIPTIONS[consts.SMPP_ESME_RINVBNDSTS]))
+            raise exceptions.PDUError("Command %s failed: %s" %
+                (p.command, consts.DESCRIPTIONS[consts.SMPP_ESME_RINVBNDSTS]))
 
         logger.debug('Sending %s PDU', p.command)
 
         generated = p.generate()
 
-        logger.debug('>>%s (%d bytes)', binascii.b2a_hex(generated), len(generated))
-        res = self._socket.send(generated)
+        logger.debug('>>%s (%d bytes)', binascii.b2a_hex(generated),
+            len(generated))
+        self._socket.send(generated)
 
         return True
-
 
     def read_pdu(self):
         """Read PDU from the SMSC"""
@@ -183,11 +169,9 @@ class Client(object):
 
         return p
 
-
     def accept(self, obj):
         """Accept an object"""
         raise NotImplementedError('not implemented')
-
 
     def _message_received(self, p):
         """Handler for received message event"""
@@ -198,6 +182,7 @@ class Client(object):
         self.send_pdu(dsmr)
 
     def _enquire_link_received(self):
+        """Response to enquire_link"""
         ler = smpp.make_pdu('enquire_link_resp', client=self)
         #, message_id=args['pdu'].sm_default_msg_id)
         self.send_pdu(ler)
@@ -219,7 +204,8 @@ class Client(object):
 
     @staticmethod
     def message_sent_handler(pdu, **kwargs):
-        """Called when SMPP server accept message (SUBMIT_SM_RESP). May be overridden"""
+        """Called when SMPP server accept message (SUBMIT_SM_RESP).
+        May be overridden"""
         logger.warning('Message sent handler (Override me)')
 
     def listen(self, ignore_error_codes=None):
@@ -235,7 +221,7 @@ class Client(object):
                     self.send_pdu(p)
                     continue
 
-                if p.command == 'unbind': #unbind_res
+                if p.command == 'unbind':  # unbind_res
                     logger.info('Unbind command received')
                     break
                 elif p.command == 'submit_sm_resp':
@@ -252,10 +238,10 @@ class Client(object):
                 if ignore_error_codes \
                         and len(e.args) > 1 \
                         and e.args[1] in ignore_error_codes:
-                    logging.warning('(%d) %s. Ignored.' % (e.args[1], e.args[0]))
+                    logging.warning('(%d) %s. Ignored.' %
+                        (e.args[1], e.args[0]))
                 else:
                     raise
-
 
     def send_message(self, **kwargs):
         """Send message
@@ -271,32 +257,3 @@ class Client(object):
         ssm = smpp.make_pdu('submit_sm', client=self, **kwargs)
         self.send_pdu(ssm)
         return ssm
-
-#
-# Main block for testing
-#
-if __name__ == '__main__':
-
-    import sys
-    sys.path.insert(0, '..')
-    import smpplib
-
-    def recv_handler(**kwargs):
-        p = kwargs['pdu']
-        msg = p.short_message
-        logger.info('Message received: %s', msg)
-        logger.info('Source address: %s', p.source_addr)
-        logger.info('Destination address: %s', p.destination_addr)
-
-    client = smpplib.client.Client('localhost', 11111)
-    client.connect()
-
-    client.set_message_received_handler(recv_handler)
-
-    try:
-        client.bind_transceiver(system_id='omni', password='omni', system_type='www')
-        client.listen()
-    finally:
-        client.unbind()
-        client.disconnect()
-

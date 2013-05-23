@@ -60,7 +60,7 @@ class Client(object):
             try:
                 self.unbind()
             except (exceptions.PDUError, exceptions.ConnectionError), e:
-                if len(e.args > 1):
+                if len(getattr(e, 'args', tuple())) > 1:
                     logger.warning('(%d) %s. Ignored', e.args[1], e.args[0])
                 else:
                     logger.warning('%s. Ignored', e)
@@ -150,7 +150,7 @@ class Client(object):
             length = struct.unpack('>L', raw_len)[0]
         except struct.error:
             logger.warning('Receive broken pdu...')
-            raise exceptions.PDUError()
+            raise exceptions.PDUError('Broken PDU')
 
         raw_pdu = self._socket.recv(length - 4)
         raw_pdu = raw_len + raw_pdu

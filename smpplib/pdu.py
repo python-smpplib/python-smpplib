@@ -52,7 +52,7 @@ class PDU(object):
     _sequence = None
 
     def __init__(self, client=default_client(), **kwargs):
-        """Singleton dummy client will be used if ommited"""
+        """Singleton dummy client will be used if omitted"""
         if client is None:
             self._client = default_client()
         else:

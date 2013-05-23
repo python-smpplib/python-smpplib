@@ -40,7 +40,7 @@ def make_parts(text):
         encoding = consts.SMPP_ENCODING_DEFAULT
         need_split = len(text) > consts.SEVENBIT_SIZE
         partsize = consts.SEVENBIT_MP_SIZE
-        encode = lambda s: s.encode()
+        encode = lambda s: s
     except EncodeError:
         encoding = consts.SMPP_ENCODING_ISO10646
         need_split = len(text) > consts.UCS2_SIZE

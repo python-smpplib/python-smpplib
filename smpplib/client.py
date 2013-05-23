@@ -162,8 +162,8 @@ class Client(object):
         logger.debug('Read %s PDU', p.command)
 
         if p.is_error():
-            raise exceptions.PDUError('({}) {}: {}'.format(p.status, p.command,
-                consts.DESCRIPTIONS[p.status]), int(p.status))
+            return p
+
         elif p.command in consts.STATE_SETTERS:
             self.state = consts.STATE_SETTERS[p.command]
 
@@ -220,6 +220,11 @@ class Client(object):
                     p = smpp.make_pdu('enquire_link', client=self)
                     self.send_pdu(p)
                     continue
+
+                if p.is_error():
+                    raise exceptions.PDUError(
+                        '({}) {}: {}'.format(p.status, p.command,
+                        consts.DESCRIPTIONS[p.status]), int(p.status))
 
                 if p.command == 'unbind':  # unbind_res
                     logger.info('Unbind command received')

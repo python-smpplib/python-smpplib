@@ -143,7 +143,7 @@ class Client(object):
         logger.debug('Waiting for PDU...')
 
         raw_len = self._socket.recv(4)
-        if raw_len == 0:
+        if not raw_len:
             raise exceptions.ConnectionError()
 
         try:

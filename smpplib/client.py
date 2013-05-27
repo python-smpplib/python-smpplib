@@ -149,7 +149,7 @@ class Client(object):
         try:
             length = struct.unpack('>L', raw_len)[0]
         except struct.error:
-            logger.warning('Receive broken pdu...')
+            logger.warning('Receive broken pdu... %s', repr(raw_len))
             raise exceptions.PDUError('Broken PDU')
 
         raw_pdu = self._socket.recv(length - 4)

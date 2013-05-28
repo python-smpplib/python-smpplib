@@ -98,7 +98,12 @@ class Client(object):
         p = smpp.make_pdu(command_name, client=self, **kwargs)
 
         self.send_pdu(p)
-        return self.read_pdu()
+        resp = self.read_pdu()
+        if resp.is_error():
+            raise exceptions.PDUError(
+                '({}) {}: {}'.format(resp.status, resp.command,
+                consts.DESCRIPTIONS[resp.status]), int(resp.status))
+        return resp
 
     def bind_transmitter(self, **kwargs):
         """Bind as a transmitter"""

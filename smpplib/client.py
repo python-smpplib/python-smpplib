@@ -138,7 +138,15 @@ class Client(object):
 
         logger.debug('>>%s (%d bytes)', binascii.b2a_hex(generated),
             len(generated))
-        self._socket.send(generated)
+
+        sent = 0
+        sent_last = 0
+
+        while sent < len(generated):
+            sent_last = self._socket.send(generated[sent:])
+            if sent_last == 0:
+                raise exceptions.ConnectionError()
+            sent += sent_last
 
         return True
 

@@ -140,10 +140,14 @@ class Client(object):
             len(generated))
 
         sent = 0
-        sent_last = 0
 
         while sent < len(generated):
-            sent_last = self._socket.send(generated[sent:])
+            sent_last = 0
+            try:
+                sent_last = self._socket.send(generated[sent:])
+            except socket.error, e:
+                logger.warning(e)
+                raise exceptions.ConnectionError()
             if sent_last == 0:
                 raise exceptions.ConnectionError()
             sent += sent_last
@@ -155,7 +159,11 @@ class Client(object):
 
         logger.debug('Waiting for PDU...')
 
-        raw_len = self._socket.recv(4)
+        try:
+            raw_len = self._socket.recv(4)
+        except socket.error, e:
+            logger.warning(e)
+            raise exceptions.ConnectionError()
         if not raw_len:
             raise exceptions.ConnectionError()
 

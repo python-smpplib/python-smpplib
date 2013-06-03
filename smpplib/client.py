@@ -98,7 +98,10 @@ class Client(object):
         p = smpp.make_pdu(command_name, client=self, **kwargs)
 
         self.send_pdu(p)
-        resp = self.read_pdu()
+        try:
+            resp = self.read_pdu()
+        except socket.timeout:
+            raise exceptions.ConnectionError()
         if resp.is_error():
             raise exceptions.PDUError(
                 '({}) {}: {}'.format(resp.status, resp.command,
@@ -123,7 +126,10 @@ class Client(object):
         p = smpp.make_pdu('unbind', client=self)
 
         self.send_pdu(p)
-        return self.read_pdu()
+        try:
+            return self.read_pdu()
+        except socket.timeout:
+            raise exceptions.ConnectionError()
 
     def send_pdu(self, p):
         """Send PDU to the SMSC"""
@@ -161,6 +167,8 @@ class Client(object):
 
         try:
             raw_len = self._socket.recv(4)
+        except socket.timeout:
+            raise
         except socket.error, e:
             logger.warning(e)
             raise exceptions.ConnectionError()

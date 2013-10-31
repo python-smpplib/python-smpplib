@@ -475,7 +475,8 @@ class BindTransmitterResp(Command):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(BindTransmitterResp, self).__init__(command, need_sequence=False, **kwargs)
+        super(BindTransmitterResp, self).__init__(command, need_sequence=False,
+                                                                    **kwargs)
 
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -754,7 +755,8 @@ class SubmitSM(Command):
 
         if self.short_message:
             self.sm_length = len(self.short_message)
-            delattr(self, 'message_payload')
+            if hasattr(self, 'message_payload'):
+                delattr(self, 'message_payload')
         else:
             self.sm_length = 0
 
@@ -770,7 +772,8 @@ class SubmitSMResp(Command):
 
     def __init__(self, command, **kwargs):
         """Initialize"""
-        super(SubmitSMResp, self).__init__(command, need_sequence=False, **kwargs)
+        super(SubmitSMResp, self).__init__(command, need_sequence=False,
+                                                                    **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
 

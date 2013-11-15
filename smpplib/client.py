@@ -83,9 +83,10 @@ class Client(object):
         """Disconnect from the SMSC"""
         logger.info('Disconnecting...')
 
-        self._socket.close()
+        if self._socket is not None:
+            self._socket.close()
+            self._socket = None
         self.state = consts.SMPP_CLIENT_STATE_CLOSED
-        self._socket = None
 
     def _bind(self, command_name, **kwargs):
         """Send bind_transmitter command to the SMSC"""

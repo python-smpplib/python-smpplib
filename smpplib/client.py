@@ -43,7 +43,7 @@ class Client(object):
     port = None
     vendor = None
     _socket = None
-    sequence = 0
+    sequence = 1
 
     def __init__(self, host, port, timeout=5):
         """Initialize"""

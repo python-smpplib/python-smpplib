@@ -267,6 +267,8 @@ class Client(object):
                     self._enquire_link_received()
                 elif p.command == 'enquire_link_resp':
                     pass
+                elif p.command == 'alert_notification':
+                    pass
                 else:
                     logger.warning('Unhandled SMPP command "%s"', p.command)
             except exceptions.PDUError, e:

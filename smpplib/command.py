@@ -55,6 +55,7 @@ def factory(command_name, **kwargs):
             'unbind_resp': UnbindResp,
             'enquire_link': EnquireLink,
             'enquire_link_resp': EnquireLinkResp,
+            'alert_notification': AlertNotification,
         }[command_name](command_name, **kwargs)
     except KeyError:
         raise exceptions.UnknownCommandError(
@@ -897,3 +898,38 @@ class EnquireLinkResp(Command):
         """Initialize"""
         super(EnquireLinkResp, self).__init__(command, need_sequence=False,
             **kwargs)
+
+
+class AlertNotification(Command):
+    """Alert notification command response"""
+    params = {
+        'source_addr_ton': Param(type=int, size=1),
+        'source_addr_npi': Param(type=int, size=1),
+        'source_addr': Param(type=str, max=65),
+        'esme_addr_ton': Param(type=int, size=1),
+        'esme_addr_npi': Param(type=int, size=1),
+        'esme_addr': Param(type=str, max=65),
+
+        # Optional params
+        'ms_availability_status': Param(type=int, size=1),
+    }
+    params_order = (
+        'source_addr_ton',
+        'source_addr_npi',
+        'source_addr',
+        'esme_addr_ton',
+        'esme_addr_npi',
+        'esme_addr',
+
+        # Optional params
+        'ms_availability_status',
+    )
+
+    def __init__(self, command, **kwargs):
+        """Initialize"""
+        super(AlertNotification, self).__init__(
+            command,
+            need_sequence=False,
+            **kwargs
+        )
+        self._set_vars(**(dict.fromkeys(self.params)))

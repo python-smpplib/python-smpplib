@@ -88,6 +88,9 @@ class Client(object):
     @property
     def sequence(self):
         return self.sequence_strategy.sequence
+    
+    def next_sequence(self):
+        return self.sequence_strategy.next_sequence()
 
     def connect(self):
         """Connect to SMSC"""

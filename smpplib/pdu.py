@@ -71,8 +71,7 @@ class PDU(object):
 
     def _next_seq(self):
         """Return next sequence number"""
-        self._client.sequence += 1
-        return self._client.sequence
+        return self._client.sequence_strategy.next_sequence()
 
     def is_vendor(self):
         """Return True if this is a vendor PDU, False otherwise"""

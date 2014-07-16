@@ -33,6 +33,18 @@ from . import consts
 
 logger = logging.getLogger('smpplib.client')
 
+class SimpleSequenceStrategy(object):
+    
+    def __init__(self):
+        self._sequence = 1
+        
+    @property
+    def sequence(self):
+        return self._sequence
+    
+    def next_sequence(self):
+        self._sequence += 1
+        return self._sequence
 
 class Client(object):
     """SMPP client class"""
@@ -43,9 +55,9 @@ class Client(object):
     port = None
     vendor = None
     _socket = None
-    sequence = 1
+    sequence_strategy = None
 
-    def __init__(self, host, port, timeout=5):
+    def __init__(self, host, port, timeout=5, sequence_strategy=None):
         """Initialize"""
 
         self.host = host
@@ -53,6 +65,7 @@ class Client(object):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(timeout)
         self.receiver_mode = False
+        self.sequence_strategy = sequence_strategy or SimpleSequenceStrategy()
 
     def __del__(self):
         """Disconnect when client object is destroyed"""
@@ -65,6 +78,10 @@ class Client(object):
                 else:
                     logger.warning('%s. Ignored', e)
             self.disconnect()
+
+    @property
+    def sequence(self):
+        return self.sequence_strategy.sequence
 
     def connect(self):
         """Connect to SMSC"""

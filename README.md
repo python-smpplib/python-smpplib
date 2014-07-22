@@ -55,7 +55,7 @@ t.start()
 The client supports setting a custom generator that produces sequence numbers for the PDU packages. Per default a simple in memory generator is used which in conclusion is reset on (re)instantiation of the client, e.g. by an application restart. If you want to keep the sequence number to be persisted across restarts you can implement your own storage backed generator.
 
 Example:
-```
+```python
 import smpplib.client
 
 import mymodule

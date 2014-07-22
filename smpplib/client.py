@@ -71,7 +71,9 @@ class Client(object):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(timeout)
         self.receiver_mode = False
-        self.sequence_generator = sequence_generator or SimpleSequenceGenerator()
+        if sequence_generator is None:
+            sequence_generator = SimpleSequenceGenerator()
+        self.sequence_generator = sequence_generator
 
     def __del__(self):
         """Disconnect when client object is destroyed"""

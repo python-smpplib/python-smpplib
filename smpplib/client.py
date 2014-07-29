@@ -33,6 +33,24 @@ from . import consts
 
 logger = logging.getLogger('smpplib.client')
 
+class SimpleSequenceGenerator(object):
+    
+    MIN_SEQUENCE = 0x00000001
+    MAX_SEQUENCE = 0x7FFFFFFF
+    
+    def __init__(self):
+        self._sequence = self.MIN_SEQUENCE
+        
+    @property
+    def sequence(self):
+        return self._sequence
+    
+    def next_sequence(self):
+        if self._sequence == self.MAX_SEQUENCE:
+            self._sequence = self.MIN_SEQUENCE
+        else:
+            self._sequence += 1
+        return self._sequence
 
 class Client(object):
     """SMPP client class"""
@@ -43,9 +61,9 @@ class Client(object):
     port = None
     vendor = None
     _socket = None
-    sequence = 1
+    sequence_generator = None
 
-    def __init__(self, host, port, timeout=5):
+    def __init__(self, host, port, timeout=5, sequence_generator=None):
         """Initialize"""
 
         self.host = host
@@ -53,6 +71,9 @@ class Client(object):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(timeout)
         self.receiver_mode = False
+        if sequence_generator is None:
+            sequence_generator = SimpleSequenceGenerator()
+        self.sequence_generator = sequence_generator
 
     def __del__(self):
         """Disconnect when client object is destroyed"""
@@ -65,6 +86,13 @@ class Client(object):
                 else:
                     logger.warning('%s. Ignored', e)
             self.disconnect()
+
+    @property
+    def sequence(self):
+        return self.sequence_generator.sequence
+    
+    def next_sequence(self):
+        return self.sequence_generator.next_sequence()
 
     def connect(self):
         """Connect to SMSC"""

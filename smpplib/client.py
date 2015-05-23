@@ -231,15 +231,6 @@ class Client(object):
         """Accept an object"""
         raise NotImplementedError('not implemented')
 
-    def _alert_received(self, p):
-        """Handler for received alert_notification event"""
-        self.alert_handler(pdu=p)
-
-    def alert_handler(self, pdu, **kwargs):
-        """Called when SMPP server sends an alert (ALERT_NOTIFICATION).
-        May be overridden"""
-        logger.warning('Alert handler (Override me)')
-
     def _message_received(self, p):
         """Handler for received message event"""
         self.message_received_handler(pdu=p)
@@ -248,21 +239,32 @@ class Client(object):
         dsmr.sequence = p.sequence
         self.send_pdu(dsmr)
 
-    def message_received_handler(self, pdu, **kwargs):
-        """Custom handler to process received message. May be overridden"""
-        logger.warning('Message received handler (Override me)')
-
-    def message_sent_handler(self, pdu, **kwargs):
-        """Called when SMPP server accept message (SUBMIT_SM_RESP).
-        May be overridden"""
-        logger.warning('Message sent handler (Override me)')
-
     def _enquire_link_received(self):
         """Response to enquire_link"""
         ler = smpp.make_pdu('enquire_link_resp', client=self)
         #, message_id=args['pdu'].sm_default_msg_id)
         self.send_pdu(ler)
         logger.debug("Link Enquiry...")
+
+    def set_message_received_handler(self, func):
+        """Set new function to handle message receive event"""
+        self.message_received_handler = func
+
+    def set_message_sent_handler(self, func):
+        """Set new function to handle message sent event"""
+        self.message_sent_handler = func
+
+    @staticmethod
+    def message_received_handler(pdu, **kwargs):
+        """Custom handler to process received message. May be overridden"""
+
+        logger.warning('Message received handler (Override me)')
+
+    @staticmethod
+    def message_sent_handler(pdu, **kwargs):
+        """Called when SMPP server accept message (SUBMIT_SM_RESP).
+        May be overridden"""
+        logger.warning('Message sent handler (Override me)')
 
     def listen(self, ignore_error_codes=None):
         """Listen for PDUs and act"""
@@ -293,8 +295,6 @@ class Client(object):
                     self._enquire_link_received()
                 elif p.command == 'enquire_link_resp':
                     pass
-                elif p.command == 'alert_notification':
-                    self._alert_received(p)
                 else:
                     logger.warning('Unhandled SMPP command "%s"', p.command)
             except exceptions.PDUError, e:

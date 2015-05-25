@@ -134,7 +134,7 @@ class Client(object):
         if resp.is_error():
             raise exceptions.PDUError(
                 '({}) {}: {}'.format(resp.status, resp.command,
-                consts.DESCRIPTIONS[resp.status]), int(resp.status))
+                consts.DESCRIPTIONS.get(resp.status, 'Unknown code')), int(resp.status))
         return resp
 
     def bind_transmitter(self, **kwargs):
@@ -280,7 +280,7 @@ class Client(object):
                 if p.is_error():
                     raise exceptions.PDUError(
                         '({}) {}: {}'.format(p.status, p.command,
-                        consts.DESCRIPTIONS[p.status]), int(p.status))
+                        consts.DESCRIPTIONS.get(p.status, 'Unknown status')), int(p.status))
 
                 if p.command == 'unbind':  # unbind_res
                     logger.info('Unbind command received')

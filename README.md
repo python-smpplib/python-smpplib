@@ -33,11 +33,15 @@ for part in parts:
     pdu = client.send_message(
         source_addr_ton=smpplib.consts.SMPP_TON_INTL,
         #source_addr_npi=smpplib.consts.SMPP_NPI_ISDN,
+        # Make sure it is a byte string, not unicode:
         source_addr='SENDERPHONENUM',
+
         dest_addr_ton=smpplib.consts.SMPP_TON_INTL,
         #dest_addr_npi=smpplib.consts.SMPP_NPI_ISDN,
+        # Make sure thease two params are byte strings, not unicode:
         destination_addr='PHONENUMBER',
         short_message=part,
+
         data_coding=encoding_flag,
         esm_class=msg_type_flag,
         registered_delivery=True,

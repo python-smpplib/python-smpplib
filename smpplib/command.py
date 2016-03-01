@@ -84,6 +84,10 @@ def get_optional_code(name):
             'Unknown SMPP command name "%s"' % name)
 
 
+def unpack_short(data, pos):
+    return struct.unpack('>H', data[pos:pos+2])[0], pos + 2
+
+
 class Command(pdu.PDU):
     """SMPP PDU Command class"""
 
@@ -335,46 +339,18 @@ class Command(pdu.PDU):
             * length (2 bytes)
             * value (variable, <length> bytes)
         """
-
-        #print binascii.b2a_hex(data)
-        #print len(data)
         dlen = len(data)
         pos = 0
 
         while pos < dlen:
-            #print pos
-            #unpacked_data1,unpacked_data2 = struct.unpack('2B',
-            #     data[pos:pos+2])
-            #pack = struct.pack(unpacked_data2,unpacked_data1)
-            #unpacked_data = struct.unpack('H', pack)
-            unpacked_data = struct.unpack('>H', data[pos:pos + 2])
-            type_code = int(''.join(map(str, unpacked_data)))
-
-            #print type_code
-            #field=None
+            type_code, pos = unpack_short(data, pos)
             field = get_optional_name(type_code)
-            #try:
-            #    field = \
-            #        optional_params.keys()[\
-            #            optional_params.values().index(type_code)]
+            length, pos = unpack_short(data, pos)
 
-            #except ValueError:
-            #    raise ValueError("Type '0x%x' not found" % type_code)
-                #print ("Type '0x%x' not found" % type_code)
-
-            #if field != None:
-            pos += 2
-
-            length = int(''.join(map(str, struct.unpack('!H',
-                data[pos:pos + 2]))))
-            pos += 2
             param = self.params[field]
-
             if param.type is int:
                 data, pos = self._parse_int(field, data, pos)
-            elif param.type is str:
-                data, pos = self._parse_string(field, data, pos)
-            elif param.type is ostr:
+            elif param.type in (str, ostr):
                 data, pos = self._parse_ostring(field, data, pos, length)
 
     def field_exists(self, field):

@@ -246,6 +246,10 @@ class Client(object):
         self.send_pdu(ler)
         logger.debug("Link Enquiry...")
 
+    def _alert_notification(self, p):
+        """Handler for alert notifiction event"""
+        self.message_received_handler(pdu=p)
+
     def set_message_received_handler(self, func):
         """Set new function to handle message receive event"""
         self.message_received_handler = func
@@ -295,6 +299,8 @@ class Client(object):
                     self._enquire_link_received()
                 elif p.command == 'enquire_link_resp':
                     pass
+                elif p.command == 'alert_notification':
+                    self._alert_notification(p)
                 else:
                     logger.warning('Unhandled SMPP command "%s"', p.command)
             except exceptions.PDUError, e:

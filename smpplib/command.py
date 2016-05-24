@@ -55,6 +55,7 @@ def factory(command_name, **kwargs):
             'unbind_resp': UnbindResp,
             'enquire_link': EnquireLink,
             'enquire_link_resp': EnquireLinkResp,
+            'alert_notification': AlertNotification,
         }[command_name](command_name, **kwargs)
     except KeyError:
         raise exceptions.UnknownCommandError(
@@ -873,3 +874,55 @@ class EnquireLinkResp(Command):
         """Initialize"""
         super(EnquireLinkResp, self).__init__(command, need_sequence=False,
             **kwargs)
+
+class AlertNotification(Command):
+    """alert_notification command class
+    """
+
+
+    # Type of Number for source address
+    source_addr_ton = None
+
+    # Numbering Plan Indicator for source address
+    source_addr_npi = None
+
+    # Address of SME which originated this message
+    source_addr = None
+
+    # TON for destination
+    esme_addr_ton = None
+
+    # NPI for destination
+    esme_addr_npi = None
+
+    # Destination address for this message
+    esme_addr = None
+
+    # Optional are taken from params list and are set dynamically when
+    # __init__ is called.
+    params = {
+        'source_addr_ton': Param(type=int, size=1),
+        'source_addr_npi': Param(type=int, size=1),
+        'source_addr': Param(type=str, max=21),
+        'esme_addr_ton': Param(type=int, size=1),
+        'esme_addr_npi': Param(type=int, size=1),
+        'esme_addr': Param(type=str, max=21),
+
+        # Optional params
+        'ms_availability_status' : Param(type=int, size=1),
+    }
+
+    params_order = ('source_addr_ton', 'source_addr_npi',
+        'source_addr', 'esme_addr_ton', 'esme_addr_npi',
+        'esme_addr',
+
+        # Optional params
+        'ms_availability_status')
+
+    def __init__(self, command, **kwargs):
+        """Initialize"""
+        super(AlertNotification, self).__init__(command, **kwargs)
+        self._set_vars(**(dict.fromkeys(self.params)))
+
+    def prep(self):
+        """Prepare to generate binary data"""

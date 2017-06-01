@@ -1,3 +1,8 @@
+import six
+
+EMPTY_STRING=six.b('')
+NULL_STRING=six.b('\0')
+
 SEVENBIT_SIZE = 160
 EIGHTBIT_SIZE = 140
 UCS2_SIZE = 70

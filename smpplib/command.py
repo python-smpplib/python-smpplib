@@ -124,7 +124,7 @@ class Command(pdu.PDU):
         if hasattr(self, 'prep') and callable(self.prep):
             self.prep()
 
-        body = ''
+        body = consts.EMPTY_STRING
 
         for field in self.params_order:
             #print field
@@ -170,7 +170,7 @@ class Command(pdu.PDU):
         if data:
             return struct.pack(fmt, data)
         else:
-            return chr(0)  # null terminator
+            return consts.NULL_STRING
 
     def _generate_string(self, field):
         """Generate string value"""
@@ -190,7 +190,7 @@ class Command(pdu.PDU):
                 value = chr(0)
 
         setattr(self, field, field_value)
-        return value
+        return six.b(value)
 
     def _generate_ostring(self, field):
         """Generate octet string value (no null terminator)"""
@@ -281,7 +281,7 @@ class Command(pdu.PDU):
         """Parse variable-length string from a PDU.
         Return (data, pos) tuple."""
 
-        end = data.find(chr(0), pos)
+        end = data.find(consts.NULL_STRING, pos)
         length = end - pos
 
         field_value = data[pos:pos + length]

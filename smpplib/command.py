@@ -24,6 +24,7 @@
 
 import struct
 import logging
+import six
 
 from . import pdu
 from . import exceptions
@@ -66,7 +67,7 @@ def get_optional_name(code):
     """Return optional_params name by given code. If code is unknown, raise
     UnkownCommandError exception"""
 
-    for key, value in consts.OPTIONAL_PARAMS.iteritems():
+    for key, value in six.iteritems(consts.OPTIONAL_PARAMS):
         if value == code:
             return key
 
@@ -113,7 +114,7 @@ class Command(pdu.PDU):
 
     def _set_vars(self, **kwargs):
         """set attributes accordingly to kwargs"""
-        for key, value in kwargs.iteritems():
+        for key, value in six.iteritems(kwargs):
             if not hasattr(self, key) or getattr(self, key) is None:
                 setattr(self, key, value)
 

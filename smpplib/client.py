@@ -81,7 +81,7 @@ class Client(object):
         if self._socket is not None:
             try:
                 self.unbind()
-            except (exceptions.PDUError, exceptions.ConnectionError), e:
+            except (exceptions.PDUError, exceptions.ConnectionError) as e:
                 if len(getattr(e, 'args', tuple())) > 1:
                     logger.warning('(%d) %s. Ignored', e.args[1], e.args[0])
                 else:
@@ -181,7 +181,7 @@ class Client(object):
             sent_last = 0
             try:
                 sent_last = self._socket.send(generated[sent:])
-            except socket.error, e:
+            except socket.error as e:
                 logger.warning(e)
                 raise exceptions.ConnectionError()
             if sent_last == 0:
@@ -199,7 +199,7 @@ class Client(object):
             raw_len = self._socket.recv(4)
         except socket.timeout:
             raise
-        except socket.error, e:
+        except socket.error as e:
             logger.warning(e)
             raise exceptions.ConnectionError()
         if not raw_len:

@@ -923,4 +923,3 @@ class AlertNotification(Command):
         """Initialize"""
         super(AlertNotification, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
-

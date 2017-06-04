@@ -35,17 +35,17 @@ from . import consts
 logger = logging.getLogger('smpplib.client')
 
 class SimpleSequenceGenerator(object):
-    
+
     MIN_SEQUENCE = 0x00000001
     MAX_SEQUENCE = 0x7FFFFFFF
-    
+
     def __init__(self):
         self._sequence = self.MIN_SEQUENCE
-        
+
     @property
     def sequence(self):
         return self._sequence
-    
+
     def next_sequence(self):
         if self._sequence == self.MAX_SEQUENCE:
             self._sequence = self.MIN_SEQUENCE
@@ -91,7 +91,7 @@ class Client(object):
     @property
     def sequence(self):
         return self.sequence_generator.sequence
-    
+
     def next_sequence(self):
         return self.sequence_generator.next_sequence()
 

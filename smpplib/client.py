@@ -23,6 +23,7 @@
 """SMPP client module"""
 
 import socket
+import select
 import struct
 import binascii
 import logging
@@ -270,47 +271,59 @@ class Client(object):
         May be overridden"""
         logger.warning('Message sent handler (Override me)')
 
+
+    def read_once(self, ignore_error_codes=None):
+        """Read a PDU and act"""
+        try:
+            try:
+                p = self.read_pdu()
+            except socket.timeout:
+                logger.debug('Socket timeout, listening again')
+                p = smpp.make_pdu('enquire_link', client=self)
+                self.send_pdu(p)
+                return
+
+            if p.is_error():
+                raise exceptions.PDUError(
+                    '({}) {}: {}'.format(p.status, p.command,
+                    consts.DESCRIPTIONS.get(p.status, 'Unknown status')), int(p.status))
+
+            if p.command == 'unbind':  # unbind_res
+                logger.info('Unbind command received')
+                return
+            elif p.command == 'submit_sm_resp':
+                self.message_sent_handler(pdu=p)
+            elif p.command == 'deliver_sm':
+                self._message_received(p)
+            elif p.command == 'enquire_link':
+                self._enquire_link_received()
+            elif p.command == 'enquire_link_resp':
+                pass
+            elif p.command == 'alert_notification':
+                self._alert_notification(p)
+            else:
+                logger.warning('Unhandled SMPP command "%s"', p.command)
+        except exceptions.PDUError as e:
+            if ignore_error_codes \
+                    and len(e.args) > 1 \
+                    and e.args[1] in ignore_error_codes:
+                logging.warning('(%d) %s. Ignored.' %
+                    (e.args[1], e.args[0]))
+            else:
+                raise
+
+    def poll(self, ignore_error_codes=None):
+        '''Act on available PDUs and return'''
+        while True:
+            readable, writable, exceptional = select.select([self._socket], [], [], 0)
+            if not readable:
+                break
+            self.read_once(ignore_error_codes)
+
     def listen(self, ignore_error_codes=None):
         """Listen for PDUs and act"""
-
         while True:
-            try:
-                try:
-                    p = self.read_pdu()
-                except socket.timeout:
-                    logger.debug('Socket timeout, listening again')
-                    p = smpp.make_pdu('enquire_link', client=self)
-                    self.send_pdu(p)
-                    continue
-
-                if p.is_error():
-                    raise exceptions.PDUError(
-                        '({}) {}: {}'.format(p.status, p.command,
-                        consts.DESCRIPTIONS.get(p.status, 'Unknown status')), int(p.status))
-
-                if p.command == 'unbind':  # unbind_res
-                    logger.info('Unbind command received')
-                    break
-                elif p.command == 'submit_sm_resp':
-                    self.message_sent_handler(pdu=p)
-                elif p.command == 'deliver_sm':
-                    self._message_received(p)
-                elif p.command == 'enquire_link':
-                    self._enquire_link_received()
-                elif p.command == 'enquire_link_resp':
-                    pass
-                elif p.command == 'alert_notification':
-                    self._alert_notification(p)
-                else:
-                    logger.warning('Unhandled SMPP command "%s"', p.command)
-            except exceptions.PDUError, e:
-                if ignore_error_codes \
-                        and len(e.args) > 1 \
-                        and e.args[1] in ignore_error_codes:
-                    logging.warning('(%d) %s. Ignored.' %
-                        (e.args[1], e.args[0]))
-                else:
-                    raise
+            self.read_once(ignore_error_codes)
 
     def send_message(self, **kwargs):
         """Send message

@@ -1,15 +1,12 @@
 from setuptools import setup, find_packages
 import sys
 
-extra = {}
-if sys.version_info >= (3,):
-    extra['use_2to3'] = True
-
 setup(name="python-smpplib",
       version='1.0.1',
       url='https://github.com/podshumok/python-smpplib',
       description='SMPP library for python',
       packages=find_packages(),
+      install_requires=[ 'six', ],
       zip_safe=True,
       classifiers=[
         'Development Status :: 4 - Beta',
@@ -24,5 +21,4 @@ setup(name="python-smpplib",
         'Intended Audience :: Telecommunications Industry',
         'License :: OSI Approved',
         ],
-      **extra
 )

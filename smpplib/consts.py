@@ -218,6 +218,33 @@ SMPP_UDHIEIE_PORT8 = 0x04
 SMPP_UDHIEIE_PORT16 = 0x04
 
 #
+# ms_availability_status parameter from alert_notification operation
+#
+SMPP_MS_AVAILABILITY_STATUS_AVAILABLE = 0x00
+SMPP_MS_AVAILABILITY_STATUS_DENIED = 0x01
+SMPP_MS_AVAILABILITY_STATUS_UNAVAILABLE = 0x02
+
+#
+# registered_delivery parameter used to request an SMSC delivery receipt and/or SME originated acknowledgements
+#
+#
+# SMSC Delivery Receipt (bits 1 and 0):
+SMPP_SMSC_DELIVERY_RECEIPT_BITMASK = 0x03
+SMPP_SMSC_DELIVERY_RECEIPT_NONE = 0x00 # No SMSC Delivery Receipt requested (default)
+SMPP_SMSC_DELIVERY_RECEIPT_BOTH = 0x01 # SMSC Delivery Receipt requested where final delivery outcome is delivery success or failure
+SMPP_SMSC_DELIVERY_RECEIPT_FAILURE = 0x02 # SMSC Delivery Receipt requested where the final delivery outcome is delivery failure
+#SME originated Acknowledgement (bits 3 and 2):
+SMPP_SME_ACK_BITMASK = 0x0C # No recipient SME acknowledgment requested (default)
+SMPP_SME_ACK_NONE = 0x00 # No recipient SME acknowledgment requested (default)
+SMPP_SME_ACK_DELIVERY = 0x04 # SME Delivery Acknowledgement requested
+SMPP_SME_ACK_MANUAL = 0x08 # SME Manual/User Acknowledgment requested
+SMPP_SME_ACK_BOTH = 0x0C # Both Delivery and Manual/User Acknowledgment requested
+#Intermediate Notification (bit 5):
+SMPP_INT_NOTIFICIATION_BITMASK = 0x10
+SMPP_INT_NOTIFICIATION_NONE = 0x00 # No Intermediate notification requested (default)
+SMPP_INT_NOTIFICIATION_REQUESTED = 0x10 # Intermediate notification requested
+
+#
 # SMPP protocol versions
 #
 SMPP_VERSION_33 = 0x33

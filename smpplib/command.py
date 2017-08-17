@@ -168,7 +168,7 @@ class Command(pdu.PDU):
         fmt = self._pack_format(field)
         data = getattr(self, field)
         if data:
-            return struct.pack(fmt, data)
+            return struct.pack(">" + fmt, data)
         else:
             return consts.NULL_STRING
 

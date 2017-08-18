@@ -268,9 +268,8 @@ class Command(pdu.PDU):
         Return (data, pos) tuple."""
 
         size = self.params[field].size
-        field_value = getattr(self, field)
-        unpacked_data = self._unpack(">" + self._pack_format(field),
-            data[pos:pos + size])
+        fmt = self._pack_format(field)
+        unpacked_data = struct.unpack(">" + fmt, data[pos:pos + size])
         field_value = ''.join(map(str, unpacked_data))
         setattr(self, field, field_value)
         pos += size

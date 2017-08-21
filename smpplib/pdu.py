@@ -132,10 +132,6 @@ class PDU(object):
         if len(data) > 16:
             self.parse_params(data[16:])
 
-    def _unpack(self, fmt, data):
-        """Unpack values. Uses struct.unpack. TODO: remove this"""
-        return struct.unpack(fmt, data)
-
     def generate(self):
         """Generate raw PDU"""
 

@@ -148,7 +148,7 @@ class Command(pdu.PDU):
                     value = self._generate_int(field)
                     body += value
                 elif param.type is str:
-                    value = self._generate_string(field)
+                    value = self._generate_string(field).encode()
                     body += value
                 elif param.type is ostr:
                     value = self._generate_ostring(field)

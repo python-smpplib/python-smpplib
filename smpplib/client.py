@@ -234,8 +234,10 @@ class Client(object):
 
     def _message_received(self, p):
         """Handler for received message event"""
-        self.message_received_handler(pdu=p)
-        dsmr = smpp.make_pdu('deliver_sm_resp', client=self)
+        status = self.message_received_handler(pdu=p)
+        if status is None:
+            status = consts.SMPP_ESME_ROK
+        dsmr = smpp.make_pdu('deliver_sm_resp', client=self, status=status)
         #, message_id=args['pdu'].sm_default_msg_id)
         dsmr.sequence = p.sequence
         self.send_pdu(dsmr)

@@ -8,10 +8,13 @@ from . import exceptions
 
 
 # from http://stackoverflow.com/questions/2452861/python-library-for-converting-plain-text-ascii-into-gsm-7-bit-character-set
-gsm = (six.u("@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>"
-             "?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà"))
-ext = (six.u("````````````````````^```````````````````{}`````\\````````````[~]`"
-             "|````````````````````````````````````€``````````````````````````"))
+gsm = ("@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>"
+       "?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà")
+ext = ("````````````````````^```````````````````{}`````\\````````````[~]`"
+       "|````````````````````````````````````€``````````````````````````")
+if six.PY2:
+    gsm = gsm.decode('utf-8')
+    ext = ext.decode('utf-8')
 
 
 class EncodeError(ValueError):

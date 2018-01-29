@@ -104,7 +104,8 @@ class Command(pdu.PDU):
         if need_sequence and (kwargs.get('sequence') is None):
             self.sequence = self._next_seq()
 
-        self.status = consts.SMPP_ESME_ROK
+        if kwargs.get('status') is None:
+            self.status = consts.SMPP_ESME_ROK
 
         #if self.is_vendor() and self.vdefs:
         #    self.defs = self.defs + self.vdefs

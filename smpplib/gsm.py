@@ -1,74 +1,80 @@
 # -*- coding: utf8 -*-
-import binascii
 import random
+
 import six
 
 from . import consts
 from . import exceptions
 
 
-# from http://stackoverflow.com/questions/2452861/python-library-for-converting-plain-text-ascii-into-gsm-7-bit-character-set
-gsm = ("@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>"
-       "?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà")
-ext = ("````````````````````^```````````````````{}`````\\````````````[~]`"
-       "|````````````````````````````````````€``````````````````````````")
-if six.PY2:
-    gsm = gsm.decode('utf-8')
-    ext = ext.decode('utf-8')
-
-
-class EncodeError(ValueError):
-    """Raised if text cannot be represented in gsm 7-bit encoding"""
-
-
-def gsm_encode(plaintext, hex=False):
-    """Replace non-GSM ASCII symbols"""
-    res = ""
-    for c in plaintext:
-        idx = gsm.find(c)
-        if idx != -1:
-            res += chr(idx)
-            continue
-        idx = ext.find(c)
-        if idx != -1:
-            res += chr(27) + chr(idx)
-            continue
-        raise EncodeError()
-    return binascii.b2a_hex(res) if hex else res
-
-
-def make_parts(text):
+def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT):
     """Returns tuple(parts, encoding, esm_class)"""
     try:
-        text = gsm_encode(text)
-        encoding = consts.SMPP_ENCODING_DEFAULT
-        need_split = len(text) > consts.SEVENBIT_SIZE
-        partsize = consts.SEVENBIT_MP_SIZE
-        encode = six.b
-    except EncodeError:
+        # Try to encode with the user-defined encoding first.
+        encode, split_size, part_size = ENCODINGS[encoding]
+        encoded_text = encode(text)
+    except KeyError:
+        raise NotImplementedError('encoding is not supported: %s' % encoding)
+    except UnicodeError:
+        # Fallback to UCS-2.
         encoding = consts.SMPP_ENCODING_ISO10646
-        need_split = len(text) > consts.UCS2_SIZE
-        partsize = consts.UCS2_MP_SIZE
-        encode = lambda s: s.encode('utf-16-be')
+        encode, split_size, part_size = ENCODINGS[encoding]
+        encoded_text = encode(text)
 
-    esm_class = consts.SMPP_MSGTYPE_DEFAULT
-
-    if need_split:
+    if len(text) > split_size:
+        # Split the text into well-formed parts.
         esm_class = consts.SMPP_GSMFEAT_UDHI
-
-        starts = tuple(range(0, len(text), partsize))
-        if len(starts) > 255:
-            raise exceptions.MessageTooLong()
-
-        parts = []
-        ipart = 1
-        uid = random.randint(0, 255)
-        for start in starts:
-            parts.append( b''.join((b'\x05\x00\x03', six.int2byte(uid),
-                                    six.int2byte(len(starts)), six.int2byte(ipart),
-                                    encode(text[start:start + partsize]))) )
-            ipart += 1
+        parts = make_parts_encoded(encoded_text, part_size)
     else:
-        parts = (encode(text),)
+        # Normal message.
+        esm_class = consts.SMPP_MSGTYPE_DEFAULT
+        parts = [encoded_text]
 
     return parts, encoding, esm_class
+
+
+# Source:
+# http://stackoverflow.com/questions/2452861/python-library-for-converting-plain-text-ascii-into-gsm-7-bit-character-set
+GSM_CHARACTER_TABLE = (
+    u"@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1bÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>"
+    u"?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà"
+    u"````````````````````^```````````````````{}`````\\````````````[~]`"
+    u"|````````````````````````````````````€``````````````````````````"
+)
+
+
+def gsm_encode(plaintext):
+    """Performs default GSM 7-bit encoding. Beware it's vendor-specific and not recommended for use."""
+    try:
+        return b''.join(
+            six.int2byte(index) if index < 0x80 else b'\x1B' + six.int2byte(index - 0x80)
+            for index in map(GSM_CHARACTER_TABLE.index, plaintext)
+        )
+    except ValueError:
+        raise UnicodeError(plaintext)
+
+
+# Map GSM encoding into a tuple of encode function, maximum single message size and a part size.
+# Add new entry here should you need to use another encoding.
+ENCODINGS = {
+    consts.SMPP_ENCODING_DEFAULT: (gsm_encode, consts.SEVENBIT_SIZE, consts.SEVENBIT_MP_SIZE),
+    consts.SMPP_ENCODING_ISO88591: (lambda text: text.encode('iso-8859-1'), consts.EIGHTBIT_SIZE, consts.EIGHTBIT_MP_SIZE),
+    consts.SMPP_ENCODING_ISO10646: (lambda text: text.encode('utf-16-be'), consts.UCS2_SIZE, consts.UCS2_MP_SIZE),
+}
+
+
+def make_parts_encoded(encoded_text, part_size):
+    """Splits encoded text into SMS parts"""
+    chunks = split_sequence(encoded_text, part_size)
+    if len(chunks) > 255:
+        raise exceptions.MessageTooLong()
+
+    uid = random.randint(0, 255)
+    header = b''.join((b'\x05\x00\x03', six.int2byte(uid), six.int2byte(len(chunks))))
+
+    return [b''.join((header, six.int2byte(i), chunk)) for i, chunk in enumerate(chunks, start=1)]
+
+
+def split_sequence(sequence, part_size):
+    """Splits the sequence into equal parts"""
+    return [sequence[i:i + part_size] for i in range(0, len(sequence), part_size)]

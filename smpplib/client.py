@@ -71,7 +71,6 @@ class Client(object):
         self.port = int(port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(timeout)
-        self.receiver_mode = False
         if sequence_generator is None:
             sequence_generator = SimpleSequenceGenerator()
         self.sequence_generator = sequence_generator
@@ -122,7 +121,6 @@ class Client(object):
 
         if command_name in ('bind_receiver', 'bind_transceiver'):
             logger.debug('Receiver mode')
-            self.receiver_mode = True
 
         #smppinst = smpp.get_instance()
         p = smpp.make_pdu(command_name, client=self, **kwargs)

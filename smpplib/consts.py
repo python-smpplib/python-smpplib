@@ -279,6 +279,7 @@ COMMAND_STATES = {
                      SMPP_CLIENT_STATE_BOUND_RX,
                      SMPP_CLIENT_STATE_BOUND_TRX,),
     'deliver_sm': (SMPP_CLIENT_STATE_BOUND_RX,
+                   SMPP_CLIENT_STATE_BOUND_TX,
                    SMPP_CLIENT_STATE_BOUND_TRX,),
     'deliver_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX,
                         SMPP_CLIENT_STATE_BOUND_TRX,),

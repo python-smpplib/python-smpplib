@@ -94,7 +94,9 @@ class Command(pdu.PDU):
     """SMPP PDU Command class"""
 
     params = {}
-
+    #UDHI params(Message identifier/Message parts/Message part number)
+    params_udhi_order = ('sar_msg_ref_num', 'sar_total_segments', 'sar_segment_seqnum')
+    
     def __init__(self, command, need_sequence=True, **kwargs):
         """Initialize"""
 
@@ -120,16 +122,14 @@ class Command(pdu.PDU):
 
     def generate_params(self):
         """Generate binary data from the object"""
-
+            
         if hasattr(self, 'prep') and callable(self.prep):
             self.prep()
 
         body = consts.EMPTY_STRING
 
         for field in self.params_order:
-            #print field
             param = self.params[field]
-            #print param
             if self.field_is_optional(field):
                 if param.type is int:
                     value = self._generate_int_tlv(field)
@@ -154,7 +154,6 @@ class Command(pdu.PDU):
                     value = self._generate_ostring(field)
                     if value:
                         body += value
-            #print value
         return body
 
     def _generate_opt_header(self, field):
@@ -210,7 +209,6 @@ class Command(pdu.PDU):
         value = None
         if data:
             value = struct.pack(">HH" + fmt, field_code, field_length, data)
-            #print binascii.b2a_hex(value)
         return value
 
     def _generate_string_tlv(self, field):
@@ -231,7 +229,6 @@ class Command(pdu.PDU):
                 field_length = len(field_value)
                 fvalue = field_value + chr(0)
                 value = struct.pack(">HH", field_code, field_length) + fvalue
-                #print binascii.b2a_hex(value)
             else:
                 value = None  # chr(0)
         #setattr(self, field, field_value)
@@ -249,7 +246,6 @@ class Command(pdu.PDU):
         if field_value:
             field_length = len(field_value)
             value = struct.pack(">HH", field_code, field_length) + field_value
-            #print binascii.b2a_hex(value)
         return value
 
     def _pack_format(self, field):
@@ -262,7 +258,7 @@ class Command(pdu.PDU):
         elif self.params[field].size == 3:
             return 'L'
         return None
-
+    
     def _parse_int(self, field, data, pos):
         """Parse fixed-length chunk from a PDU.
         Return (data, pos) tuple."""
@@ -289,14 +285,38 @@ class Command(pdu.PDU):
 
         return data, pos
 
+    def _parse_udhi(self, field, data, pos, length):
+        """Parse long message param (GSM UDHI)
+        Return (pos, length) tuple."""
+        
+        udhi_field = self.params[field].udhi_field
+        udhi_flag = int(getattr(self, udhi_field))
+
+        #01xxxxxx UDHI, only for MT message
+        if udhi_flag & 0x40: 
+            udhi_data = struct.unpack(">" + "b", data[pos:pos + 1])
+            udhi_len = int(udhi_data[0])
+            length = length - udhi_len - 1
+            pos += 3
+
+            for field_udhi in self.params_udhi_order:                  
+                size = self.params[field_udhi].size
+                fmt = self._pack_format(field_udhi)
+                unpacked_data = struct.unpack(">" + fmt, data[pos:pos + size])
+                field_value = ''.join(map(str, unpacked_data))
+                setattr(self, field_udhi, field_value)
+                pos += size
+        
+        return pos, length
+    
     def _parse_ostring(self, field, data, pos, length=None):
         """Parse an octet string from a PDU.
         Return (data, pos) tuple."""
 
         if length is None:
             length_field = self.params[field].len_field
-            length = int(getattr(self, length_field))
-            #print length_field, type(length_field), length, type(length_field)
+            length = int(getattr(self, length_field)) 
+            pos, length = self._parse_udhi(field, data, pos, length)
 
         setattr(self, field, data[pos:pos + length])
         pos += length
@@ -320,14 +340,14 @@ class Command(pdu.PDU):
             param = self.params[field]
             if pos == dlen or self.field_is_optional(field):
                 break
-
+            
             if param.type is int:
                 data, pos = self._parse_int(field, data, pos)
             elif param.type is str:
                 data, pos = self._parse_string(field, data, pos)
             elif param.type is ostr:
                 data, pos = self._parse_ostring(field, data, pos)
-        #print pos,field,data
+
         if pos < dlen:
             #None
             self.parse_optional_params(data[pos:])
@@ -383,14 +403,14 @@ class Param(object):
             raise ValueError("Invalid parameter type: %s"
                 % kwargs.get('type'))
 
-        valid_keys = ('type', 'size', 'min', 'max', 'len_field')
+        valid_keys = ('type', 'size', 'min', 'max', 'len_field', 'udhi_field')
         for k in kwargs:
             if k not in valid_keys:
                 raise KeyError("Key '%s' not allowed here" % k)
 
         self.type = kwargs.get('type')
 
-        for param in ('size', 'min', 'max', 'len_field'):
+        for param in ('size', 'min', 'max', 'len_field', 'udhi_field'):
             if param in kwargs:
                 setattr(self, param, kwargs[param])
 
@@ -498,7 +518,7 @@ class DataSM(Command):
         'dest_network_type': Param(type=int, size=1),
         'dest_bearer_type': Param(type=int, size=1),
         'dest_telematics_id': Param(type=int, size=2),
-        'sar_msg_ref_num': Param(type=int, size=2),
+        'sar_msg_ref_num': Param(type=int, size=1),
         'sar_total_segments': Param(type=int, size=1),
         'sar_segment_seqnum': Param(type=int, size=1),
         'more_messages_to_send': Param(type=int, size=1),
@@ -650,6 +670,11 @@ class SubmitSM(Command):
 
     # Up to 254 octets of short message user data
     short_message = None
+    
+    #UDHI params(Message identifier/Message parts/Message part number)
+    sar_msg_ref_num = 0
+    sar_total_segments = 0 
+    sar_segment_seqnum = 0
 
     # Optional are taken from params list and are set dynamically when
     # __init__ is called.
@@ -672,14 +697,15 @@ class SubmitSM(Command):
         'sm_default_msg_id': Param(type=int, size=1),
         'sm_length': Param(type=int, size=1),
         'short_message': Param(type=ostr, max=254,
-                               len_field='sm_length'),
+                               len_field='sm_length', 
+                               udhi_field='esm_class'),
         # Optional params
         'user_message_reference': Param(type=int, size=2),
         'source_port': Param(type=int, size=2),
         'source_addr_subunit': Param(type=int, size=2),
         'destination_port': Param(type=int, size=2),
         'dest_addr_subunit': Param(type=int, size=1),
-        'sar_msg_ref_num': Param(type=int, size=2),
+        'sar_msg_ref_num': Param(type=int, size=1),
         'sar_total_segments': Param(type=int, size=1),
         'sar_segment_seqnum': Param(type=int, size=1),
         'more_messages_to_send': Param(type=int, size=1),
@@ -777,13 +803,14 @@ class DeliverSM(SubmitSM):
         'sm_default_msg_id': Param(type=int, size=1),
         'sm_length': Param(type=int, size=1),
         'short_message': Param(type=ostr, max=254,
-                               len_field='sm_length'),
+                               len_field='sm_length', 
+                               udhi_field='esm_class'),
 
         # Optional params
         'user_message_reference': Param(type=int, size=2),
         'source_port': Param(type=int, size=2),
         'destination_port': Param(type=int, size=2),
-        'sar_msg_ref_num': Param(type=int, size=2),
+        'sar_msg_ref_num': Param(type=int, size=1),
         'sar_total_segments': Param(type=int, size=1),
         'sar_segment_seqnum': Param(type=int, size=1),
         'user_response_code': Param(type=int, size=1),

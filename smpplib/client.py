@@ -22,17 +22,16 @@
 
 """SMPP client module"""
 
-import socket
-import select
-import struct
 import binascii
 import logging
+import select
+import socket
+import struct
 
-from . import smpp
-from . import exceptions
-from . import consts
+from smpplib import consts, exceptions, smpp
 
 logger = logging.getLogger('smpplib.client')
+
 
 class SimpleSequenceGenerator(object):
 
@@ -53,6 +52,7 @@ class SimpleSequenceGenerator(object):
             self._sequence += 1
         return self._sequence
 
+
 class Client(object):
     """SMPP client class"""
 
@@ -65,8 +65,6 @@ class Client(object):
     sequence_generator = None
 
     def __init__(self, host, port, timeout=5, sequence_generator=None):
-        """Initialize"""
-
         self.host = host
         self.port = int(port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,7 +120,6 @@ class Client(object):
         if command_name in ('bind_receiver', 'bind_transceiver'):
             logger.debug('Receiver mode')
 
-        #smppinst = smpp.get_instance()
         p = smpp.make_pdu(command_name, client=self, **kwargs)
 
         self.send_pdu(p)
@@ -131,9 +128,12 @@ class Client(object):
         except socket.timeout:
             raise exceptions.ConnectionError()
         if resp.is_error():
-            raise exceptions.PDUError(
-                '({}) {}: {}'.format(resp.status, resp.command,
-                consts.DESCRIPTIONS.get(resp.status, 'Unknown code')), int(resp.status))
+            raise exceptions.PDUError('({}) {}: {}'.format(
+                resp.status,
+                resp.command,
+                consts.DESCRIPTIONS.get(resp.status, 'Unknown code')),
+                int(resp.status),
+            )
         return resp
 
     def bind_transmitter(self, **kwargs):
@@ -162,21 +162,21 @@ class Client(object):
     def send_pdu(self, p):
         """Send PDU to the SMSC"""
 
-        if not self.state in consts.COMMAND_STATES[p.command]:
-            raise exceptions.PDUError("Command %s failed: %s" %
-                (p.command, consts.DESCRIPTIONS[consts.SMPP_ESME_RINVBNDSTS]))
+        if self.state not in consts.COMMAND_STATES[p.command]:
+            raise exceptions.PDUError("Command %s failed: %s" % (
+                p.command,
+                consts.DESCRIPTIONS[consts.SMPP_ESME_RINVBNDSTS],
+            ))
 
         logger.debug('Sending %s PDU', p.command)
 
         generated = p.generate()
 
-        logger.debug('>>%s (%d bytes)', binascii.b2a_hex(generated),
-            len(generated))
+        logger.debug('>>%s (%d bytes)', binascii.b2a_hex(generated), len(generated))
 
         sent = 0
 
         while sent < len(generated):
-            sent_last = 0
             try:
                 sent_last = self._socket.send(generated[sent:])
             except socket.error as e:
@@ -214,42 +214,40 @@ class Client(object):
 
         logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
 
-        p = smpp.parse_pdu(raw_pdu, client=self)
+        pdu = smpp.parse_pdu(raw_pdu, client=self)
 
-        logger.debug('Read %s PDU', p.command)
+        logger.debug('Read %s PDU', pdu.command)
 
-        if p.is_error():
-            return p
+        if pdu.is_error():
+            return pdu
 
-        elif p.command in consts.STATE_SETTERS:
-            self.state = consts.STATE_SETTERS[p.command]
+        elif pdu.command in consts.STATE_SETTERS:
+            self.state = consts.STATE_SETTERS[pdu.command]
 
-        return p
+        return pdu
 
     def accept(self, obj):
         """Accept an object"""
         raise NotImplementedError('not implemented')
 
-    def _message_received(self, p):
+    def _message_received(self, pdu):
         """Handler for received message event"""
-        status = self.message_received_handler(pdu=p)
+        status = self.message_received_handler(pdu=pdu)
         if status is None:
             status = consts.SMPP_ESME_ROK
         dsmr = smpp.make_pdu('deliver_sm_resp', client=self, status=status)
-        #, message_id=args['pdu'].sm_default_msg_id)
-        dsmr.sequence = p.sequence
+        dsmr.sequence = pdu.sequence
         self.send_pdu(dsmr)
 
     def _enquire_link_received(self):
         """Response to enquire_link"""
         ler = smpp.make_pdu('enquire_link_resp', client=self)
-        #, message_id=args['pdu'].sm_default_msg_id)
         self.send_pdu(ler)
         logger.debug("Link Enquiry...")
 
-    def _alert_notification(self, p):
-        """Handler for alert notifiction event"""
-        self.message_received_handler(pdu=p)
+    def _alert_notification(self, pdu):
+        """Handler for alert notification event"""
+        self.message_received_handler(pdu=pdu)
 
     def set_message_received_handler(self, func):
         """Set new function to handle message receive event"""
@@ -267,53 +265,54 @@ class Client(object):
 
     @staticmethod
     def message_sent_handler(pdu, **kwargs):
-        """Called when SMPP server accept message (SUBMIT_SM_RESP).
-        May be overridden"""
+        """
+        Called when SMPP server accept message (SUBMIT_SM_RESP).
+        May be overridden
+        """
         logger.warning('Message sent handler (Override me)')
-
 
     def read_once(self, ignore_error_codes=None):
         """Read a PDU and act"""
         try:
             try:
-                p = self.read_pdu()
+                pdu = self.read_pdu()
             except socket.timeout:
                 logger.debug('Socket timeout, listening again')
-                p = smpp.make_pdu('enquire_link', client=self)
-                self.send_pdu(p)
+                pdu = smpp.make_pdu('enquire_link', client=self)
+                self.send_pdu(pdu)
                 return
 
-            if p.is_error():
-                raise exceptions.PDUError(
-                    '({}) {}: {}'.format(p.status, p.command,
-                    consts.DESCRIPTIONS.get(p.status, 'Unknown status')), int(p.status))
+            if pdu.is_error():
+                raise exceptions.PDUError('({}) {}: {}'.format(
+                    pdu.status,
+                    pdu.command,
+                    consts.DESCRIPTIONS.get(pdu.status, 'Unknown status')),
+                    int(pdu.status),
+                )
 
-            if p.command == 'unbind':  # unbind_res
+            if pdu.command == 'unbind':  # unbind_res
                 logger.info('Unbind command received')
                 return
-            elif p.command == 'submit_sm_resp':
-                self.message_sent_handler(pdu=p)
-            elif p.command == 'deliver_sm':
-                self._message_received(p)
-            elif p.command == 'enquire_link':
+            elif pdu.command == 'submit_sm_resp':
+                self.message_sent_handler(pdu=pdu)
+            elif pdu.command == 'deliver_sm':
+                self._message_received(pdu)
+            elif pdu.command == 'enquire_link':
                 self._enquire_link_received()
-            elif p.command == 'enquire_link_resp':
+            elif pdu.command == 'enquire_link_resp':
                 pass
-            elif p.command == 'alert_notification':
-                self._alert_notification(p)
+            elif pdu.command == 'alert_notification':
+                self._alert_notification(pdu)
             else:
-                logger.warning('Unhandled SMPP command "%s"', p.command)
+                logger.warning('Unhandled SMPP command "%s"', pdu.command)
         except exceptions.PDUError as e:
-            if ignore_error_codes \
-                    and len(e.args) > 1 \
-                    and e.args[1] in ignore_error_codes:
-                logging.warning('(%d) %s. Ignored.' %
-                    (e.args[1], e.args[0]))
+            if ignore_error_codes and len(e.args) > 1 and e.args[1] in ignore_error_codes:
+                logging.warning('(%d) %s. Ignored.', e.args[1], e.args[0])
             else:
                 raise
 
     def poll(self, ignore_error_codes=None):
-        '''Act on available PDUs and return'''
+        """Act on available PDUs and return"""
         while True:
             readable, writable, exceptional = select.select([self._socket], [], [], 0)
             if not readable:

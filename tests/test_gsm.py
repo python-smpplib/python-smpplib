@@ -1,11 +1,7 @@
 # -*- coding: utf8 -*-
-import random
 
+import mock
 import pytest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 
 from smpplib import consts
 from smpplib.gsm import gsm_encode, make_parts, make_parts_encoded

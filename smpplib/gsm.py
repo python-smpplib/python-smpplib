@@ -3,8 +3,7 @@ import random
 
 import six
 
-from . import consts
-from . import exceptions
+from smpplib import consts, exceptions
 
 
 def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT):

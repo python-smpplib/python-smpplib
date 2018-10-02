@@ -1,5 +1,6 @@
 import six
-from . import exceptions
+
+from smpplib import exceptions
 
 #
 # SMPP commands map (human-readable -> numeric)
@@ -31,28 +32,30 @@ commands = {
     'submit_multi_resp': 0x80000021,
     'alert_notification': 0x00000102,
     'data_sm': 0x00000103,
-    'data_sm_resp': 0x80000103
+    'data_sm_resp': 0x80000103,
 }
 
 
 def get_command_name(code):
-    """Return command name by given code. If code is unknown, raise
-    UnkownCommandError exception"""
+    """
+    Return command name by given code.
+    If code is unknown, raise UnknownCommandError exception.
+    """
 
     for key, value in six.iteritems(commands):
         if value == code:
             return key
 
-    raise exceptions.UnknownCommandError("Unknown SMPP command code "
-                                   "'0x%x'" % code)
+    raise exceptions.UnknownCommandError("Unknown SMPP command code '0x%x'" % code)
 
 
 def get_command_code(name):
-    """Return command code by given command name. If name is unknown,
-    raise UnknownCommandError exception"""
+    """
+    Return command code by given command name.
+    If name is unknown, raise UnknownCommandError exception.
+    """
 
     try:
         return commands[name]
     except KeyError:
-        raise exceptions.UnknownCommandError("Unknown SMPP command name '%s'"
-            % name)
+        raise exceptions.UnknownCommandError("Unknown SMPP command name '%s'" % name)

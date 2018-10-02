@@ -22,14 +22,13 @@
 
 """SMPP Commands module"""
 
-import struct
 import logging
+import struct
+
 import six
 
-from . import pdu
-from . import exceptions
-from . import consts
-from .ptypes import ostr, flag
+from smpplib import consts, exceptions, pdu
+from smpplib.ptypes import flag, ostr
 
 logger = logging.getLogger('smpplib.command')
 
@@ -59,8 +58,7 @@ def factory(command_name, **kwargs):
             'alert_notification': AlertNotification,
         }[command_name](command_name, **kwargs)
     except KeyError:
-        raise exceptions.UnknownCommandError(
-            'Command "%s" is not supported' % command_name)
+        raise exceptions.UnknownCommandError('Command "%s" is not supported' % command_name)
 
 
 def get_optional_name(code):
@@ -71,8 +69,7 @@ def get_optional_name(code):
         if value == code:
             return key
 
-    raise exceptions.UnknownCommandError(
-        'Unknown SMPP command code "0x%x"' % code)
+    raise exceptions.UnknownCommandError('Unknown SMPP command code "0x%x"' % code)
 
 
 def get_optional_code(name):
@@ -82,8 +79,7 @@ def get_optional_code(name):
     try:
         return consts.OPTIONAL_PARAMS[name]
     except KeyError:
-        raise exceptions.UnknownCommandError(
-            'Unknown SMPP command name "%s"' % name)
+        raise exceptions.UnknownCommandError('Unknown SMPP command name "%s"' % name)
 
 
 def unpack_short(data, pos):
@@ -96,8 +92,6 @@ class Command(pdu.PDU):
     params = {}
 
     def __init__(self, command, need_sequence=True, **kwargs):
-        """Initialize"""
-
         super(Command, self).__init__(**kwargs)
 
         self.command = command
@@ -107,10 +101,6 @@ class Command(pdu.PDU):
         if kwargs.get('status') is None:
             self.status = consts.SMPP_ESME_ROK
 
-        #if self.is_vendor() and self.vdefs:
-        #    self.defs = self.defs + self.vdefs
-
-        #self.__dict__.update(**(args))
         self._set_vars(**kwargs)
 
     def _set_vars(self, **kwargs):
@@ -128,9 +118,7 @@ class Command(pdu.PDU):
         body = consts.EMPTY_STRING
 
         for field in self.params_order:
-            #print field
             param = self.params[field]
-            #print param
             if self.field_is_optional(field):
                 if param.type is int:
                     value = self._generate_int_tlv(field)
@@ -155,7 +143,6 @@ class Command(pdu.PDU):
                     value = self._generate_ostring(field)
                     if value:
                         body += value
-            #print value
         return body
 
     def _generate_opt_header(self, field):
@@ -211,7 +198,6 @@ class Command(pdu.PDU):
         value = None
         if data:
             value = struct.pack(">HH" + fmt, field_code, field_length, data)
-            #print binascii.b2a_hex(value)
         return value
 
     def _generate_string_tlv(self, field):
@@ -232,10 +218,8 @@ class Command(pdu.PDU):
                 field_length = len(field_value)
                 fvalue = field_value + chr(0)
                 value = struct.pack(">HH", field_code, field_length) + fvalue
-                #print binascii.b2a_hex(value)
             else:
                 value = None  # chr(0)
-        #setattr(self, field, field_value)
         return value
 
     def _generate_ostring_tlv(self, field):
@@ -250,7 +234,6 @@ class Command(pdu.PDU):
         if field_value:
             field_length = len(field_value)
             value = struct.pack(">HH", field_code, field_length) + field_value
-            #print binascii.b2a_hex(value)
         return value
 
     def _pack_format(self, field):
@@ -265,8 +248,10 @@ class Command(pdu.PDU):
         return None
 
     def _parse_int(self, field, data, pos):
-        """Parse fixed-length chunk from a PDU.
-        Return (data, pos) tuple."""
+        """
+        Parse fixed-length chunk from a PDU.
+        Return (data, pos) tuple.
+        """
 
         size = self.params[field].size
         fmt = self._pack_format(field)
@@ -278,8 +263,10 @@ class Command(pdu.PDU):
         return data, pos
 
     def _parse_string(self, field, data, pos):
-        """Parse variable-length string from a PDU.
-        Return (data, pos) tuple."""
+        """
+        Parse variable-length string from a PDU.
+        Return (data, pos) tuple.
+        """
 
         end = data.find(consts.NULL_STRING, pos)
         length = end - pos
@@ -291,13 +278,14 @@ class Command(pdu.PDU):
         return data, pos
 
     def _parse_ostring(self, field, data, pos, length=None):
-        """Parse an octet string from a PDU.
-        Return (data, pos) tuple."""
+        """
+        Parse an octet string from a PDU.
+        Return (data, pos) tuple.
+        """
 
         if length is None:
             length_field = self.params[field].len_field
             length = int(getattr(self, length_field))
-            #print length_field, type(length_field), length, type(length_field)
 
         setattr(self, field, data[pos:pos + length])
         pos += length
@@ -328,9 +316,7 @@ class Command(pdu.PDU):
                 data, pos = self._parse_string(field, data, pos)
             elif param.type is ostr:
                 data, pos = self._parse_ostring(field, data, pos)
-        #print pos,field,data
         if pos < dlen:
-            #None
             self.parse_optional_params(data[pos:])
 
     def parse_optional_params(self, data):
@@ -375,14 +361,11 @@ class Param(object):
     """Command parameter info class"""
 
     def __init__(self, **kwargs):
-        """Initialize"""
-
         if 'type' not in kwargs:
             raise KeyError('Parameter Type not defined')
 
         if kwargs.get('type') not in (int, str, ostr, flag):
-            raise ValueError("Invalid parameter type: %s"
-                % kwargs.get('type'))
+            raise ValueError("Invalid parameter type: %s" % kwargs.get('type'))
 
         valid_keys = ('type', 'size', 'min', 'max', 'len_field')
         for k in kwargs:
@@ -414,14 +397,13 @@ class BindTransmitter(Command):
     }
 
     # Order is important, but params dictionary is unordered
-    params_order = ('system_id', 'password', 'system_type',
-        'interface_version', 'addr_ton', 'addr_npi', 'address_range')
+    params_order = (
+        'system_id', 'password', 'system_type',
+        'interface_version', 'addr_ton', 'addr_npi', 'address_range',
+    )
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
-
-        super(BindTransmitter, self).__init__(command, need_sequence=False,
-            **kwargs)
+        super(BindTransmitter, self).__init__(command, need_sequence=False, **kwargs)
 
         self._set_vars(**(dict.fromkeys(self.params)))
         self.interface_version = consts.SMPP_VERSION_34
@@ -430,14 +412,12 @@ class BindTransmitter(Command):
 class BindReceiver(BindTransmitter):
     """Bind as a receiver command"""
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(BindReceiver, self).__init__(command, **kwargs)
 
 
 class BindTransceiver(BindTransmitter):
-    """Bind as reciever and transmitter command"""
+    """Bind as receiver and transmitter command"""
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(BindTransceiver, self).__init__(command, **kwargs)
 
 
@@ -452,7 +432,6 @@ class BindTransmitterResp(Command):
     params_order = ('system_id', 'sc_interface_version')
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(BindTransmitterResp, self).__init__(command, need_sequence=False,
                                                                     **kwargs)
 
@@ -462,14 +441,12 @@ class BindTransmitterResp(Command):
 class BindReceiverResp(BindTransmitterResp):
     """Response for bind as a reciever command"""
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(BindReceiverResp, self).__init__(command, **kwargs)
 
 
 class BindTransceiverResp(BindTransmitterResp):
     """Response for bind as a transceiver command"""
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(BindTransceiverResp, self).__init__(command, **kwargs)
 
 
@@ -525,12 +502,13 @@ class DataSM(Command):
         'alert_on_msg_delivery': Param(type=flag),
         'language_indicator': Param(type=int, size=1),
         'its_reply_type': Param(type=int, size=1),
-        'its_session_info': Param(type=int, size=2)
+        'its_session_info': Param(type=int, size=2),
     }
 
-    params_order = ('service_type', 'source_addr_ton', 'source_addr_npi',
+    params_order = (
+        'service_type', 'source_addr_ton', 'source_addr_npi',
         'source_addr', 'dest_addr_ton', 'dest_addr_npi', 'destination_addr',
-        'esm_class', 'registered_delivery', 'data_coding'
+        'esm_class', 'registered_delivery', 'data_coding',
 
         # Optional params:
         'source_port', 'source_addr_subunit', 'source_network_type',
@@ -545,10 +523,10 @@ class DataSM(Command):
         'user_response_code', 'display_time', 'sms_signal',
         'ms_validity', 'ms_msg_wait_facilities', 'number_of_messages',
         'alert_on_message_delivery', 'language_indicator', 'its_reply_type',
-        'its_session_info')
+        'its_session_info',
+    )
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(DataSM, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -563,8 +541,6 @@ class DataSMResp(Command):
     dpf_result = None
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
-
         super(DataSMResp, self).__init__(command, **kwargs)
 
 
@@ -574,10 +550,7 @@ class GenericNAck(Command):
     _defs = []
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
-
-        super(GenericNAck, self).__init__(command, need_sequence=False,
-            **kwargs)
+        super(GenericNAck, self).__init__(command, need_sequence=False, **kwargs)
 
 
 class SubmitSM(Command):
@@ -642,7 +615,7 @@ class SubmitSM(Command):
     # Encoding scheme of the short messaege data
     data_coding = None  # SMPP_ENCODING_DEFAULT#ISO10646
 
-     # Indicates the short message to send from a list of predefined
+    # Indicates the short message to send from a list of predefined
     # ('canned') short messages stored on the SMSC
     sm_default_msg_id = None
 
@@ -672,8 +645,8 @@ class SubmitSM(Command):
         'data_coding': Param(type=int, size=1),
         'sm_default_msg_id': Param(type=int, size=1),
         'sm_length': Param(type=int, size=1),
-        'short_message': Param(type=ostr, max=254,
-                               len_field='sm_length'),
+        'short_message': Param(type=ostr, max=254, len_field='sm_length'),
+
         # Optional params
         'user_message_reference': Param(type=int, size=2),
         'source_port': Param(type=int, size=2),
@@ -704,7 +677,8 @@ class SubmitSM(Command):
         'ussd_service_op': Param(type=int, size=1),
     }
 
-    params_order = ('service_type', 'source_addr_ton', 'source_addr_npi',
+    params_order = (
+        'service_type', 'source_addr_ton', 'source_addr_npi',
         'source_addr', 'dest_addr_ton', 'dest_addr_npi',
         'destination_addr', 'esm_class', 'protocol_id', 'priority_flag',
         'schedule_delivery_time', 'validity_period', 'registered_delivery',
@@ -721,10 +695,10 @@ class SubmitSM(Command):
         'sms_signal', 'ms_validity', 'ms_msg_wait_facilities',
         'number_of_messages', 'alert_on_message_delivery',
         'language_indicator', 'its_reply_type', 'its_session_info',
-        'ussd_service_op')
+        'ussd_service_op',
+    )
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(SubmitSM, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -743,15 +717,13 @@ class SubmitSMResp(Command):
     """Response command for submit_sm"""
 
     params = {
-        'message_id': Param(type=str, max=65)
+        'message_id': Param(type=str, max=65),
     }
 
     params_order = ('message_id',)
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
-        super(SubmitSMResp, self).__init__(command, need_sequence=False,
-                                                                    **kwargs)
+        super(SubmitSMResp, self).__init__(command, need_sequence=False, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
 
@@ -777,8 +749,7 @@ class DeliverSM(SubmitSM):
         'data_coding': Param(type=int, size=1),
         'sm_default_msg_id': Param(type=int, size=1),
         'sm_length': Param(type=int, size=1),
-        'short_message': Param(type=ostr, max=254,
-                               len_field='sm_length'),
+        'short_message': Param(type=ostr, max=254, len_field='sm_length'),
 
         # Optional params
         'user_message_reference': Param(type=int, size=2),
@@ -799,9 +770,10 @@ class DeliverSM(SubmitSM):
         'network_error_code': Param(type=ostr, size=3),
         'message_state': Param(type=int, size=1),
         'receipted_message_id': Param(type=str, max=65),
-        }
+    }
 
-    params_order = ('service_type', 'source_addr_ton', 'source_addr_npi',
+    params_order = (
+        'service_type', 'source_addr_ton', 'source_addr_npi',
         'source_addr', 'dest_addr_ton', 'dest_addr_npi',
         'destination_addr', 'esm_class', 'protocol_id', 'priority_flag',
         'schedule_delivery_time', 'validity_period', 'registered_delivery',
@@ -815,10 +787,10 @@ class DeliverSM(SubmitSM):
         'payload_type', 'message_payload',
         'callback_num', 'source_subaddress',
         'dest_subaddress', 'language_indicator', 'its_session_info',
-        'network_error_code', 'message_state', 'receipted_message_id')
+        'network_error_code', 'message_state', 'receipted_message_id',
+    )
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(DeliverSM, self).__init__(command, need_sequence=False, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -828,7 +800,6 @@ class DeliverSMResp(SubmitSMResp):
     message_id = None
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(DeliverSMResp, self).__init__(command, **kwargs)
 
 
@@ -839,7 +810,6 @@ class Unbind(Command):
     params_order = ()
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(Unbind, self).__init__(command, need_sequence=False, **kwargs)
 
 
@@ -850,9 +820,7 @@ class UnbindResp(Command):
     params_order = ()
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
-        super(UnbindResp, self).__init__(command, need_sequence=False,
-            **kwargs)
+        super(UnbindResp, self).__init__(command, need_sequence=False, **kwargs)
 
 
 class EnquireLink(Command):
@@ -861,9 +829,7 @@ class EnquireLink(Command):
     params_order = ()
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
-        super(EnquireLink, self).__init__(command, need_sequence=False,
-            **kwargs)
+        super(EnquireLink, self).__init__(command, need_sequence=False, **kwargs)
 
 
 class EnquireLinkResp(Command):
@@ -872,14 +838,11 @@ class EnquireLinkResp(Command):
     params_order = ()
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
-        super(EnquireLinkResp, self).__init__(command, need_sequence=False,
-            **kwargs)
+        super(EnquireLinkResp, self).__init__(command, need_sequence=False, **kwargs)
+
 
 class AlertNotification(Command):
-    """alert_notification command class
-    """
-
+    """`alert_notification` command class"""
 
     # Type of Number for source address
     source_addr_ton = None
@@ -913,14 +876,15 @@ class AlertNotification(Command):
         'ms_availability_status' : Param(type=int, size=1),
     }
 
-    params_order = ('source_addr_ton', 'source_addr_npi',
+    params_order = (
+        'source_addr_ton', 'source_addr_npi',
         'source_addr', 'esme_addr_ton', 'esme_addr_npi',
         'esme_addr',
 
         # Optional params
-        'ms_availability_status')
+        'ms_availability_status',
+    )
 
     def __init__(self, command, **kwargs):
-        """Initialize"""
         super(AlertNotification, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))

@@ -1,8 +1,10 @@
 import six
 
-EMPTY_STRING=six.b('')
-NULL_STRING=six.b('\0')
+EMPTY_STRING = six.b('')
+NULL_STRING = six.b('\0')
 
+
+# Message part lengths in different encodings.
 SEVENBIT_SIZE = 160
 EIGHTBIT_SIZE = 140
 UCS2_SIZE = 70
@@ -10,9 +12,8 @@ SEVENBIT_MP_SIZE = SEVENBIT_SIZE - 7
 EIGHTBIT_MP_SIZE = EIGHTBIT_SIZE - 6
 UCS2_MP_SIZE = UCS2_SIZE - 3
 
-#
-# SMPP error codes:
-#
+
+# SMPP error codes.
 SMPP_ESME_ROK = 0x00000000
 SMPP_ESME_RINVMSGLEN = 0x00000001
 SMPP_ESME_RINVCMDLEN = 0x00000002
@@ -63,9 +64,7 @@ SMPP_ESME_RDELIVERYFAILURE = 0x000000FE
 SMPP_ESME_RUNKNOWNERR = 0x000000FF
 
 
-#
-# Status description strings:
-#
+# Status description strings.
 DESCRIPTIONS = {
     SMPP_ESME_ROK: 'No Error',
     SMPP_ESME_RINVMSGLEN: 'Message Length is invalid',
@@ -89,8 +88,7 @@ DESCRIPTIONS = {
     SMPP_ESME_RINVNUMDESTS: 'Invalid number of destinations',
     SMPP_ESME_RINVDLNAME: 'Invalid Distribution List name',
     SMPP_ESME_RINVDESTFLAG: 'Invalid Destination Flag (submit_multi)',
-    SMPP_ESME_RINVSUBREP: 'Invalid Submit With Replace request '
-                        '(replace_if_present_flag set)',
+    SMPP_ESME_RINVSUBREP: 'Invalid Submit With Replace request (replace_if_present_flag set)',
     SMPP_ESME_RINVESMCLASS: 'Invalid esm_class field data',
     SMPP_ESME_RCNTSUBDL: 'Cannot submit to Distribution List',
     SMPP_ESME_RSUBMITFAIL: 'submit_sm or submit_multi failed',
@@ -101,8 +99,7 @@ DESCRIPTIONS = {
     SMPP_ESME_RINVSYSTYP: 'Invalid system_type field',
     SMPP_ESME_RINVREPFLAG: 'Invalid replace_if_present flag',
     SMPP_ESME_RINVNUMMSGS: 'Invalid number of messages',
-    SMPP_ESME_RTHROTTLED: 'Throttling error (ESME has exceeded allowed '
-                          'message limits)',
+    SMPP_ESME_RTHROTTLED: 'Throttling error (ESME has exceeded allowed message limits)',
     SMPP_ESME_RINVSCHED: 'Invalid Scheduled Delivery Time',
     SMPP_ESME_RINVEXPIRY: 'Invalid message validity period (Expiry Time)',
     SMPP_ESME_RINVDFTMSGID: 'Predefined Message is invalid or not found',
@@ -116,18 +113,19 @@ DESCRIPTIONS = {
     SMPP_ESME_RMISSINGOPTPARAM: 'Expected Optional Parameter missing',
     SMPP_ESME_RINVOPTPARAMVAL: 'Invalid Optional Parameter Value',
     SMPP_ESME_RDELIVERYFAILURE: 'Delivery Failure (used data_sm_resp)',
-    SMPP_ESME_RUNKNOWNERR: 'Unknown Error'
+    SMPP_ESME_RUNKNOWNERR: 'Unknown Error',
 }
 
+
+# Internal client state.
 SMPP_CLIENT_STATE_CLOSED = 0
 SMPP_CLIENT_STATE_OPEN = 1
 SMPP_CLIENT_STATE_BOUND_TX = 2
 SMPP_CLIENT_STATE_BOUND_RX = 3
 SMPP_CLIENT_STATE_BOUND_TRX = 4
 
-#
-# TON (Type Of Number) values
-#
+
+# TON (Type Of Number) values.
 SMPP_TON_UNK = 0x00
 SMPP_TON_INTL = 0x01
 SMPP_TON_NATNL = 0x02
@@ -137,9 +135,7 @@ SMPP_TON_ALNUM = 0x05
 SMPP_TON_ABBREV = 0x06
 
 
-#
-# NPI (Numbering Plan Indicator) values
-#
+# NPI (Numbering Plan Indicator) values.
 SMPP_NPI_UNK = 0x00  # Unknown
 SMPP_NPI_ISDN = 0x01  # ISDN (E163/E164)
 SMPP_NPI_DATA = 0x03  # Data (X.121)
@@ -152,9 +148,7 @@ SMPP_NPI_IP = 0x0E  # IPv4
 SMPP_NPI_WAP = 0x12  # WAP
 
 
-#
-# Encoding Types
-#
+# Encoding types.
 SMPP_ENCODING_DEFAULT = 0x00  # SMSC Default
 SMPP_ENCODING_IA5 = 0x01  # IA5 (CCITT T.50)/ASCII (ANSI X3.4)
 SMPP_ENCODING_BINARY = 0x02  # Octet unspecified (8-bit binary)
@@ -170,9 +164,7 @@ SMPP_ENCODING_EXTJIS = 0x0D  # Extended Kanji JIS (X 0212-1990)
 SMPP_ENCODING_KSC5601 = 0x0E  # KS C 5601
 
 
-#
-# Language Types
-#
+# Language types.
 SMPP_LANG_DEFAULT = 0x00
 SMPP_LANG_EN = 0x01
 SMPP_LANG_FR = 0x02
@@ -180,75 +172,67 @@ SMPP_LANG_ES = 0x03
 SMPP_LANG_DE = 0x04
 
 
-#
-# ESM class values
-#
+# ESM class values.
 SMPP_MSGMODE_DEFAULT = 0x00  # Default SMSC mode (e.g. Store and Forward)
 SMPP_MSGMODE_DATAGRAM = 0x01  # Datagram mode
 SMPP_MSGMODE_FORWARD = 0x02  # Forward (i.e. Transaction) mode
-SMPP_MSGMODE_STOREFORWARD = 0x03  # Store and Forward mode (use this to
-                                  # select Store and Forward mode if Default
-                                  # mode is not Store and Forward)
+SMPP_MSGMODE_STOREFORWARD = 0x03  # Explicit Store and Forward mode
 
 
 SMPP_MSGTYPE_DEFAULT = 0x00  # Default message type (i.e. normal message)
-SMPP_MSGTYPE_DELIVERYACK = 0x08  # Message containts ESME Delivery
-                                 # Acknowledgement
-SMPP_MSGTYPE_USERACK = 0x10  # Message containts ESME Manual/User
-                             # Acknowledgement
+SMPP_MSGTYPE_DELIVERYACK = 0x08  # Message containts ESME Delivery acknowledgement
+SMPP_MSGTYPE_USERACK = 0x10  # Message containts ESME Manual/User acknowledgement
+
 
 SMPP_GSMFEAT_NONE = 0x00  # No specific features selected
 SMPP_GSMFEAT_UDHI = 0x40  # UDHI Indicator (only relevant for MT msgs)
 SMPP_GSMFEAT_REPLYPATH = 0x80  # Set Reply Path (only relevant for GSM net)
 SMPP_GSMFEAT_UDHIREPLYPATH = 0xC0  # Set UDHI and Reply Path (for GSM net)
 
-#
-# SMPP Protocol ID
-#
+
+# SMPP Protocol ID.
 SMPP_PID_DEFAULT = 0x00  # Default
 SMPP_PID_RIP = 0x41  # Replace if present on handset
 
-#
-# SMPP User Data Header Information Element Identifier
-#
+
+# SMPP User Data Header Information Element Identifier.
 SMPP_UDHIEIE_CONCATENATED = 0x00  # Concatenated short message, 8-bit ref
 SMPP_UDHIEIE_SPECIAL = 0x01
 SMPP_UDHIEIE_RESERVED = 0x02
 SMPP_UDHIEIE_PORT8 = 0x04
 SMPP_UDHIEIE_PORT16 = 0x04
 
-#
-# ms_availability_status parameter from alert_notification operation
-#
+
+# `ms_availability_status` parameter from `alert_notification` operation.
 SMPP_MS_AVAILABILITY_STATUS_AVAILABLE = 0x00
 SMPP_MS_AVAILABILITY_STATUS_DENIED = 0x01
 SMPP_MS_AVAILABILITY_STATUS_UNAVAILABLE = 0x02
 
-#
-# registered_delivery parameter used to request an SMSC delivery receipt and/or SME originated acknowledgements
-#
-#
-# SMSC Delivery Receipt (bits 1 and 0):
-SMPP_SMSC_DELIVERY_RECEIPT_BITMASK = 0x03
-SMPP_SMSC_DELIVERY_RECEIPT_NONE = 0x00 # No SMSC Delivery Receipt requested (default)
-SMPP_SMSC_DELIVERY_RECEIPT_BOTH = 0x01 # SMSC Delivery Receipt requested where final delivery outcome is delivery success or failure
-SMPP_SMSC_DELIVERY_RECEIPT_FAILURE = 0x02 # SMSC Delivery Receipt requested where the final delivery outcome is delivery failure
-#SME originated Acknowledgement (bits 3 and 2):
-SMPP_SME_ACK_BITMASK = 0x0C # No recipient SME acknowledgment requested (default)
-SMPP_SME_ACK_NONE = 0x00 # No recipient SME acknowledgment requested (default)
-SMPP_SME_ACK_DELIVERY = 0x04 # SME Delivery Acknowledgement requested
-SMPP_SME_ACK_MANUAL = 0x08 # SME Manual/User Acknowledgment requested
-SMPP_SME_ACK_BOTH = 0x0C # Both Delivery and Manual/User Acknowledgment requested
-#Intermediate Notification (bit 5):
-SMPP_INT_NOTIFICIATION_BITMASK = 0x10
-SMPP_INT_NOTIFICIATION_NONE = 0x00 # No Intermediate notification requested (default)
-SMPP_INT_NOTIFICIATION_REQUESTED = 0x10 # Intermediate notification requested
 
-#
-# SMPP protocol versions
-#
+# `registered_delivery` parameter used to request an SMSC delivery receipt and/or SME originated acknowledgements.
+# SMSC Delivery Receipt (bits 1 and 0).
+SMPP_SMSC_DELIVERY_RECEIPT_NONE = 0x00  # No SMSC Delivery Receipt requested (default)
+SMPP_SMSC_DELIVERY_RECEIPT_BOTH = 0x01  # SMSC Delivery Receipt requested where final delivery outcome is delivery success or failure
+SMPP_SMSC_DELIVERY_RECEIPT_FAILURE = 0x02  # SMSC Delivery Receipt requested where the final delivery outcome is delivery failure
+SMPP_SMSC_DELIVERY_RECEIPT_BITMASK = 0x03  # Reserved.
+
+# SME originated Acknowledgement (bits 3 and 2).
+SMPP_SME_ACK_BITMASK = 0x0C  # No recipient SME acknowledgment requested (default)
+SMPP_SME_ACK_NONE = 0x00  # No recipient SME acknowledgment requested (default)
+SMPP_SME_ACK_DELIVERY = 0x04  # SME Delivery Acknowledgement requested
+SMPP_SME_ACK_MANUAL = 0x08  # SME Manual/User Acknowledgment requested
+SMPP_SME_ACK_BOTH = 0x0C  # Both Delivery and Manual/User Acknowledgment requested
+
+# Intermediate Notification (bit 5).
+SMPP_INT_NOTIFICIATION_BITMASK = 0x10
+SMPP_INT_NOTIFICIATION_NONE = 0x00  # No Intermediate notification requested (default)
+SMPP_INT_NOTIFICIATION_REQUESTED = 0x10  # Intermediate notification requested
+
+
+# SMPP protocol versions.
 SMPP_VERSION_33 = 0x33
 SMPP_VERSION_34 = 0x34
+
 
 COMMAND_STATES = {
     'bind_transmitter': (SMPP_CLIENT_STATE_OPEN,),
@@ -258,59 +242,64 @@ COMMAND_STATES = {
     'bind_transceiver': (SMPP_CLIENT_STATE_OPEN,),
     'bind_transceiver_resp': (SMPP_CLIENT_STATE_OPEN,),
     'outbind': (SMPP_CLIENT_STATE_OPEN,),
-    'unbind': (SMPP_CLIENT_STATE_BOUND_TX,
-               SMPP_CLIENT_STATE_BOUND_RX,
-               SMPP_CLIENT_STATE_BOUND_TRX,),
-    'unbind_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                    SMPP_CLIENT_STATE_BOUND_RX,
-                    SMPP_CLIENT_STATE_BOUND_TRX,),
-    'submit_sm': (SMPP_CLIENT_STATE_BOUND_TX,
-                  SMPP_CLIENT_STATE_BOUND_TRX,),
-    'submit_sm_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                       SMPP_CLIENT_STATE_BOUND_TRX,),
-    'submit_sm_multi': (SMPP_CLIENT_STATE_BOUND_TX,
-                        SMPP_CLIENT_STATE_BOUND_TRX,),
-    'submit_sm_multi_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                             SMPP_CLIENT_STATE_BOUND_TRX,),
-    'data_sm': (SMPP_CLIENT_STATE_BOUND_TX,
-                SMPP_CLIENT_STATE_BOUND_RX,
-                SMPP_CLIENT_STATE_BOUND_TRX,),
-    'data_sm_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                     SMPP_CLIENT_STATE_BOUND_RX,
-                     SMPP_CLIENT_STATE_BOUND_TRX,),
-    'deliver_sm': (SMPP_CLIENT_STATE_BOUND_RX,
-                   SMPP_CLIENT_STATE_BOUND_TRX,),
-    'deliver_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX,
-                        SMPP_CLIENT_STATE_BOUND_TRX,),
-    'query_sm': (SMPP_CLIENT_STATE_BOUND_RX,
-                 SMPP_CLIENT_STATE_BOUND_TRX,),
-    'query_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX,
-                      SMPP_CLIENT_STATE_BOUND_TRX,),
-    'cancel_sm': (SMPP_CLIENT_STATE_BOUND_RX,
-                  SMPP_CLIENT_STATE_BOUND_TRX,),
-    'cancel_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX,
-                       SMPP_CLIENT_STATE_BOUND_TRX,),
+    'unbind': (
+        SMPP_CLIENT_STATE_BOUND_TX,
+        SMPP_CLIENT_STATE_BOUND_RX,
+        SMPP_CLIENT_STATE_BOUND_TRX,
+    ),
+    'unbind_resp': (
+        SMPP_CLIENT_STATE_BOUND_TX,
+        SMPP_CLIENT_STATE_BOUND_RX,
+        SMPP_CLIENT_STATE_BOUND_TRX,
+    ),
+    'submit_sm': (SMPP_CLIENT_STATE_BOUND_TX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'submit_sm_resp': (SMPP_CLIENT_STATE_BOUND_TX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'submit_sm_multi': (SMPP_CLIENT_STATE_BOUND_TX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'submit_sm_multi_resp': (SMPP_CLIENT_STATE_BOUND_TX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'data_sm': (
+        SMPP_CLIENT_STATE_BOUND_TX,
+        SMPP_CLIENT_STATE_BOUND_RX,
+        SMPP_CLIENT_STATE_BOUND_TRX,
+    ),
+    'data_sm_resp': (
+        SMPP_CLIENT_STATE_BOUND_TX,
+        SMPP_CLIENT_STATE_BOUND_RX,
+        SMPP_CLIENT_STATE_BOUND_TRX,
+    ),
+    'deliver_sm': (SMPP_CLIENT_STATE_BOUND_RX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'deliver_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'query_sm': (SMPP_CLIENT_STATE_BOUND_RX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'query_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'cancel_sm': (SMPP_CLIENT_STATE_BOUND_RX, SMPP_CLIENT_STATE_BOUND_TRX,),
+    'cancel_sm_resp': (SMPP_CLIENT_STATE_BOUND_RX, SMPP_CLIENT_STATE_BOUND_TRX,),
     'replace_sm': (SMPP_CLIENT_STATE_BOUND_TX,),
     'replace_sm_resp': (SMPP_CLIENT_STATE_BOUND_TX,),
-    'enquire_link': (SMPP_CLIENT_STATE_BOUND_TX,
-                     SMPP_CLIENT_STATE_BOUND_RX,
-                     SMPP_CLIENT_STATE_BOUND_TRX,),
-    'enquire_link_resp': (SMPP_CLIENT_STATE_BOUND_TX,
-                          SMPP_CLIENT_STATE_BOUND_RX,
-                          SMPP_CLIENT_STATE_BOUND_TRX,),
-    'alert_notification': (SMPP_CLIENT_STATE_BOUND_RX,
-                           SMPP_CLIENT_STATE_BOUND_TRX,),
-    'generic_nack': (SMPP_CLIENT_STATE_BOUND_TX,
-                     SMPP_CLIENT_STATE_BOUND_RX,
-                     SMPP_CLIENT_STATE_BOUND_TRX,)
+    'enquire_link': (
+        SMPP_CLIENT_STATE_BOUND_TX,
+        SMPP_CLIENT_STATE_BOUND_RX,
+        SMPP_CLIENT_STATE_BOUND_TRX,
+    ),
+    'enquire_link_resp': (
+        SMPP_CLIENT_STATE_BOUND_TX,
+        SMPP_CLIENT_STATE_BOUND_RX,
+        SMPP_CLIENT_STATE_BOUND_TRX,
+    ),
+    'alert_notification': (SMPP_CLIENT_STATE_BOUND_RX, SMPP_CLIENT_STATE_BOUND_TRX),
+    'generic_nack': (
+        SMPP_CLIENT_STATE_BOUND_TX,
+        SMPP_CLIENT_STATE_BOUND_RX,
+        SMPP_CLIENT_STATE_BOUND_TRX,
+    )
 }
+
 
 STATE_SETTERS = {
     'bind_transmitter_resp': SMPP_CLIENT_STATE_BOUND_TX,
     'bind_receiver_resp': SMPP_CLIENT_STATE_BOUND_RX,
     'bind_transceiver_resp': SMPP_CLIENT_STATE_BOUND_TRX,
-    'unbind_resp': SMPP_CLIENT_STATE_OPEN
+    'unbind_resp': SMPP_CLIENT_STATE_OPEN,
 }
+
 
 OPTIONAL_PARAMS = {
     'dest_addr_subunit': 0x0005,
@@ -356,5 +345,5 @@ OPTIONAL_PARAMS = {
     'ms_validity': 0x1204,
     'alert_on_message_delivery': 0x130C,
     'its_reply_type': 0x1380,
-    'its_session_info': 0x1383
+    'its_session_info': 0x1383,
 }

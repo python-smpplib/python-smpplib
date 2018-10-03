@@ -218,12 +218,14 @@ SMPP_SMSC_DELIVERY_RECEIPT_BOTH = 0x01  # SMSC Delivery Receipt requested where 
 SMPP_SMSC_DELIVERY_RECEIPT_FAILURE = 0x02  # SMSC Delivery Receipt requested where the final delivery outcome is delivery failure
 SMPP_SMSC_DELIVERY_RECEIPT_BITMASK = 0x03  # Reserved.
 
+
 # SME originated Acknowledgement (bits 3 and 2).
 SMPP_SME_ACK_BITMASK = 0x0C  # No recipient SME acknowledgment requested (default)
 SMPP_SME_ACK_NONE = 0x00  # No recipient SME acknowledgment requested (default)
 SMPP_SME_ACK_DELIVERY = 0x04  # SME Delivery Acknowledgement requested
 SMPP_SME_ACK_MANUAL = 0x08  # SME Manual/User Acknowledgment requested
 SMPP_SME_ACK_BOTH = 0x0C  # Both Delivery and Manual/User Acknowledgment requested
+
 
 # Intermediate Notification (bit 5).
 SMPP_INT_NOTIFICIATION_BITMASK = 0x10
@@ -234,6 +236,29 @@ SMPP_INT_NOTIFICIATION_REQUESTED = 0x10  # Intermediate notification requested
 # SMPP protocol versions.
 SMPP_VERSION_33 = 0x33
 SMPP_VERSION_34 = 0x34
+
+
+# Network types.
+SMPP_NETWORK_TYPE_UNKNOWN = 0x00
+SMPP_NETWORK_TYPE_GSM = 0x01
+SMPP_NETWORK_TYPE_TDMA = 0x02
+SMPP_NETWORK_TYPE_CDMA = 0x03
+SMPP_NETWORK_TYPE_PDC = 0x04
+SMPP_NETWORK_TYPE_PHS = 0x05
+SMPP_NETWORK_TYPE_IDEN = 0x06
+SMPP_NETWORK_TYPE_AMPS = 0x07
+SMPP_NETWORK_TYPE_PAGING = 0x08
+
+
+# Message state.
+SMPP_MESSAGE_STATE_ENROUTE = 1
+SMPP_MESSAGE_STATE_DELIVERED = 2
+SMPP_MESSAGE_STATE_EXPIRED = 3
+SMPP_MESSAGE_STATE_DELETED = 4
+SMPP_MESSAGE_STATE_UNDELIVERABLE = 5
+SMPP_MESSAGE_STATE_ACCEPTED = 6
+SMPP_MESSAGE_STATE_UNKNOWN = 7
+SMPP_MESSAGE_STATE_REJECTED = 8
 
 
 COMMAND_STATES = {
@@ -348,4 +373,12 @@ OPTIONAL_PARAMS = {
     'alert_on_message_delivery': 0x130C,
     'its_reply_type': 0x1380,
     'its_session_info': 0x1383,
+}
+
+
+# Integer value struct formats for different sizes.
+INT_PACK_FORMATS = {
+    1: 'B',
+    2: 'H',
+    3: 'L',
 }

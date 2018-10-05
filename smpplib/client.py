@@ -32,8 +32,7 @@ from . import smpp
 from . import exceptions
 from . import consts
 
-#logger = logging.getLogger('smpplib.client')
-logger = logging.getLogger('ecarx_smpp_recv_proton')
+logger = logging.getLogger('smpplib.client')
 
 class SimpleSequenceGenerator(object):
 

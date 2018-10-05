@@ -32,7 +32,8 @@ from . import smpp
 from . import exceptions
 from . import consts
 
-logger = logging.getLogger('smpplib.client')
+#logger = logging.getLogger('smpplib.client')
+logger = logging.getLogger('ecarx_smpp_recv_proton')
 
 class SimpleSequenceGenerator(object):
 
@@ -64,7 +65,7 @@ class Client(object):
     _socket = None
     sequence_generator = None
 
-    def __init__(self, host, port, timeout=5, sequence_generator=None):
+    def __init__(self, host, port, sysid=None, passwd=None, timeout=5, sequence_generator=None):
         """Initialize"""
 
         self.host = host
@@ -75,6 +76,8 @@ class Client(object):
         if sequence_generator is None:
             sequence_generator = SimpleSequenceGenerator()
         self.sequence_generator = sequence_generator
+        self.sysid = sysid
+        self.passwd = passwd
 
     def __del__(self):
         """Disconnect when client object is destroyed"""
@@ -95,7 +98,7 @@ class Client(object):
     def next_sequence(self):
         return self.sequence_generator.next_sequence()
 
-    def connect(self):
+    def connect(self, timeout = 5):
         """Connect to SMSC"""
 
         logger.info('Connecting to %s:%s...', self.host, self.port)
@@ -103,7 +106,8 @@ class Client(object):
         try:
             if self._socket is None:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.connect((self.host, self.port))
+                self._socket.settimeout(timeout)
+            self._socket.connect((self.host, self.port))            
             self.state = consts.SMPP_CLIENT_STATE_OPEN
         except socket.error:
             raise exceptions.ConnectionError("Connection refused")
@@ -121,7 +125,7 @@ class Client(object):
         """Send bind_transmitter command to the SMSC"""
 
         if command_name in ('bind_receiver', 'bind_transceiver'):
-            logger.debug('Receiver mode')
+            logger.info('Receiver mode')
             self.receiver_mode = True
 
         #smppinst = smpp.get_instance()
@@ -182,7 +186,8 @@ class Client(object):
             try:
                 sent_last = self._socket.send(generated[sent:])
             except socket.error as e:
-                logger.warning(e)
+                print str(e)
+                logger.warning(e)                
                 raise exceptions.ConnectionError()
             if sent_last == 0:
                 raise exceptions.ConnectionError()
@@ -215,6 +220,7 @@ class Client(object):
         raw_pdu = raw_len + raw_pdu
 
         logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
+        #print '<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu)
 
         p = smpp.parse_pdu(raw_pdu, client=self)
 
@@ -291,8 +297,16 @@ class Client(object):
                     consts.DESCRIPTIONS.get(p.status, 'Unknown status')), int(p.status))
 
             if p.command == 'unbind':  # unbind_res
-                logger.info('Unbind command received')
-                return
+                logger.warning('Unbind command received')
+                try:
+	                if self.receiver_mode:
+	                	self.bind_receiver(system_id=self.sysid, password=self.passwd, system_type='', addr_ton=1, addr_npi=1)
+	                else:
+	                	self.bind_transmitter(system_id=self.sysid, password=self.passwd, system_type='', addr_ton=1, addr_npi=1)
+                except Exception:
+                	logger.warning('Rebind fail, sysid[%s] mode[%s]' % (self.sysid, self.receiver_mode))
+	                self.state = consts.SMPP_CLIENT_STATE_OPEN
+	                raise exceptions.ConnectionError()                
             elif p.command == 'submit_sm_resp':
                 self.message_sent_handler(pdu=p)
             elif p.command == 'deliver_sm':

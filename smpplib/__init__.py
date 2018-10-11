@@ -20,8 +20,4 @@
 # Modified by Yusuf Kaka <yusufk at gmail>
 # Added support for Optional TLV's
 
-from . import smpp
-from . import pdu
-from . import command
-from . import client
-from . import exceptions
+from smpplib import client, command, exceptions, pdu, smpp

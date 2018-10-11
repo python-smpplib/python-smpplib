@@ -22,8 +22,7 @@
 
 """SMPP module"""
 
-from . import pdu
-from . import command
+from smpplib import command, pdu
 
 
 def make_pdu(command_name, **kwargs):

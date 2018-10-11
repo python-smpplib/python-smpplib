@@ -24,10 +24,8 @@
 
 import struct
 
-from . import command_codes
-from . import consts
-
-SMPP_ESME_ROK = 0x00000000
+from smpplib import command_codes, consts
+from smpplib.consts import SMPP_ESME_ROK
 
 
 def extract_command(pdu):
@@ -141,7 +139,6 @@ class PDU(object):
 
         command_code = command_codes.get_command_code(self.command)
 
-        header = struct.pack(">LLLL", self._length, command_code,
-                             self.status, self.sequence)
+        header = struct.pack(">LLLL", self._length, command_code, self.status, self.sequence)
 
         return header + body

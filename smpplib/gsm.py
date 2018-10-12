@@ -77,3 +77,35 @@ def make_parts_encoded(encoded_text, part_size):
 def split_sequence(sequence, part_size):
     """Splits the sequence into equal parts"""
     return [sequence[i:i + part_size] for i in range(0, len(sequence), part_size)]
+
+def make_ucs2_compatible_parts(text):
+    """
+    This method will make correct partition for latin and cyrillic letters
+    :param text: Text to partition
+    :return: parts, encoding, esm_class
+    """
+    text_to_encode = text
+    parts = []
+
+    part = b''
+    for letter in text_to_encode:
+        encoded_letter = letter.encode('utf-16-be')
+        if len(part) + len(encoded_letter) < consts.UCS2_MP_SIZE:
+            part += encoded_letter
+        else:
+            parts.append(part)
+            part = encoded_letter
+    parts.append(part)
+
+    esm_class = consts.SMPP_MSGTYPE_DEFAULT
+    if len(parts) > 1:
+        esm_class = consts.SMPP_GSMFEAT_UDHI
+        uid = six.int2byte(random.randint(0, 255))
+        parts = [b''.join((b'\x05\x00\x03',
+                           uid,
+                           six.int2byte(len(parts)),
+                           six.int2byte(i + 1),
+                           current_part))
+                 for i, current_part in enumerate(parts)]
+
+    return parts, consts.SMPP_ENCODING_ISO10646, esm_class

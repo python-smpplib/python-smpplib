@@ -1,3 +1,7 @@
+### 1.1 (unreleased)
+
+* Support context manager interface, move `__del__` functionality to `__exit__`
+
 ### 1.0.3
 
 * Fix UCS-2 encoding: fixes #49 and #53

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='python-smpplib',
-    version='1.0.2',
+    version='1.0.3',
     url='https://github.com/podshumok/python-smpplib',
     description='SMPP library for python',
     long_description=open('README.md', 'rt').read(),

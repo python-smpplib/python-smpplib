@@ -1,3 +1,7 @@
+### 1.0.3
+
+* Fix UCS-2 encoding: fixes #49 and #53
+
 ### 1.0.2
 
 * Add `tox.ini`, support `2.6`, `2.7`, `3.4`, `3.5`, `3.6` and `3.7`

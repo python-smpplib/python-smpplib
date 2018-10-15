@@ -10,19 +10,21 @@ def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT):
     """Returns tuple(parts, encoding, esm_class)"""
     try:
         # Try to encode with the user-defined encoding first.
-        encode, split_size, part_size = ENCODINGS[encoding]
+        encode, split_length, part_size = ENCODINGS[encoding]
         encoded_text = encode(text)
     except KeyError:
         raise NotImplementedError('encoding is not supported: %s' % encoding)
     except UnicodeError:
         # Fallback to UCS-2.
         encoding = consts.SMPP_ENCODING_ISO10646
-        encode, split_size, part_size = ENCODINGS[encoding]
+        encode, split_length, part_size = ENCODINGS[encoding]
         encoded_text = encode(text)
 
-    if len(text) > split_size:
+    if len(text) > split_length:
         # Split the text into well-formed parts.
         esm_class = consts.SMPP_GSMFEAT_UDHI
+        # FIXME: 7-bit encoding has variable-length characters.
+        # FIXME: it means that a character may be broken by splitting.
         parts = make_parts_encoded(encoded_text, part_size)
     else:
         # Normal message.
@@ -56,9 +58,9 @@ def gsm_encode(plaintext):
 # Map GSM encoding into a tuple of encode function, maximum single message size and a part size.
 # Add new entry here should you need to use another encoding.
 ENCODINGS = {
-    consts.SMPP_ENCODING_DEFAULT: (gsm_encode, consts.SEVENBIT_SIZE, consts.SEVENBIT_MP_SIZE),
-    consts.SMPP_ENCODING_ISO88591: (lambda text: text.encode('iso-8859-1'), consts.EIGHTBIT_SIZE, consts.EIGHTBIT_MP_SIZE),
-    consts.SMPP_ENCODING_ISO10646: (lambda text: text.encode('utf-16-be'), consts.UCS2_SIZE, consts.UCS2_MP_SIZE),
+    consts.SMPP_ENCODING_DEFAULT: (gsm_encode, consts.SEVENBIT_LENGTH, consts.SEVENBIT_PART_SIZE),
+    consts.SMPP_ENCODING_ISO88591: (lambda text: text.encode('iso-8859-1'), consts.EIGHTBIT_LENGTH, consts.EIGHTBIT_PART_SIZE),
+    consts.SMPP_ENCODING_ISO10646: (lambda text: text.encode('utf-16-be'), consts.UCS2_LENGTH, consts.UCS2_PART_SIZE),
 }
 
 

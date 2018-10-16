@@ -1,6 +1,7 @@
 ### 1.1 (unreleased)
 
 * Support context manager interface, move `__del__` functionality to `__exit__`
+* Change `callback_num` type to Octet String
 
 ### 1.0.3
 

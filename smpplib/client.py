@@ -73,8 +73,10 @@ class Client(object):
             sequence_generator = SimpleSequenceGenerator()
         self.sequence_generator = sequence_generator
 
-    def __del__(self):
-        """Disconnect when client object is destroyed"""
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
         if self._socket is not None:
             try:
                 self.unbind()
@@ -84,6 +86,10 @@ class Client(object):
                 else:
                     logger.warning('%s. Ignored', e)
             self.disconnect()
+
+    def __del__(self):
+        if self._socket is not None:
+            logger.warning('%s was not closed' % self)
 
     @property
     def sequence(self):
@@ -109,6 +115,8 @@ class Client(object):
         """Disconnect from the SMSC"""
         logger.info('Disconnecting...')
 
+        if self.state != consts.SMPP_CLIENT_STATE_OPEN:
+            logger.warning('%s is disconnecting in the bound state' % self)
         if self._socket is not None:
             self._socket.close()
             self._socket = None

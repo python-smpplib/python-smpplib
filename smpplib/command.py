@@ -153,7 +153,7 @@ class Command(pdu.PDU):
     def _generate_int(self, field):
         """Generate integer value"""
 
-        fmt = self._pack_format(field)
+        fmt = self._int_pack_format(field)
         data = getattr(self, field)
         if data:
             return struct.pack(">" + fmt, data)
@@ -191,7 +191,7 @@ class Command(pdu.PDU):
 
     def _generate_int_tlv(self, field):
         """Generate integer value"""
-        fmt = self._pack_format(field)
+        fmt = self._int_pack_format(field)
         data = getattr(self, field)
         field_code = get_optional_code(field)
         field_length = self.params[field].size
@@ -236,16 +236,9 @@ class Command(pdu.PDU):
             value = struct.pack(">HH", field_code, field_length) + field_value
         return value
 
-    def _pack_format(self, field):
+    def _int_pack_format(self, field):
         """Return format type"""
-
-        if self.params[field].size == 1:
-            return 'B'
-        elif self.params[field].size == 2:
-            return 'H'
-        elif self.params[field].size == 3:
-            return 'L'
-        return None
+        return consts.INT_PACK_FORMATS[self.params[field].size]
 
     def _parse_int(self, field, data, pos):
         """
@@ -254,25 +247,26 @@ class Command(pdu.PDU):
         """
 
         size = self.params[field].size
-        fmt = self._pack_format(field)
-        unpacked_data = struct.unpack(">" + fmt, data[pos:pos + size])
-        field_value = ''.join(map(str, unpacked_data))
+        fmt = self._int_pack_format(field)
+        field_value, = struct.unpack(">" + fmt, data[pos:pos + size])
         setattr(self, field, field_value)
         pos += size
 
         return data, pos
 
-    def _parse_string(self, field, data, pos):
+    def _parse_string(self, field, data, pos, length=None):
         """
         Parse variable-length string from a PDU.
         Return (data, pos) tuple.
         """
 
-        end = data.find(consts.NULL_STRING, pos)
-        length = end - pos
+        if length is None:
+            end = data.find(consts.NULL_STRING, pos)
+            length = end - pos
+        else:
+            length -= 1  # length includes trailing NULL character
 
-        field_value = data[pos:pos + length]
-        setattr(self, field, field_value)
+        setattr(self, field, data[pos:pos + length])
         pos += length + 1
 
         return data, pos
@@ -338,7 +332,9 @@ class Command(pdu.PDU):
             param = self.params[field]
             if param.type is int:
                 data, pos = self._parse_int(field, data, pos)
-            elif param.type in (str, ostr):
+            elif param.type is str:
+                data, pos = self._parse_string(field, data, pos, length)
+            elif param.type is ostr:
                 data, pos = self._parse_ostring(field, data, pos, length)
 
     def field_exists(self, field):
@@ -770,6 +766,9 @@ class DeliverSM(SubmitSM):
         'network_error_code': Param(type=ostr, size=3),
         'message_state': Param(type=int, size=1),
         'receipted_message_id': Param(type=str, max=65),
+        'source_network_type': Param(type=int, size=1),
+        'dest_network_type': Param(type=int, size=1),
+        'more_messages_to_send': Param(type=int, size=1),
     }
 
     params_order = (
@@ -788,6 +787,7 @@ class DeliverSM(SubmitSM):
         'callback_num', 'source_subaddress',
         'dest_subaddress', 'language_indicator', 'its_session_info',
         'network_error_code', 'message_state', 'receipted_message_id',
+        'source_network_type', 'dest_network_type', 'more_messages_to_send',
     )
 
     def __init__(self, command, **kwargs):

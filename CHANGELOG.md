@@ -2,6 +2,10 @@
 
 * Support context manager interface, move `__del__` functionality to `__exit__`
 * Change `callback_num` type to Octet String
+* Add message state and network type constants
+* Fix trailing NULL character in parsed octet strings
+* Add optional fields for `deliver_sm` PDU (couldn't find them in specs but observed in real systems)
+* Fix integers converted to strings
 
 ### 1.0.3
 

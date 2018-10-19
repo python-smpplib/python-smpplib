@@ -380,5 +380,5 @@ OPTIONAL_PARAMS = {
 INT_PACK_FORMATS = {
     1: 'B',
     2: 'H',
-    3: 'L',
+    4: 'L',
 }

@@ -6,6 +6,7 @@
 * Fix trailing NULL character in parsed octet strings
 * Add optional fields for `deliver_sm` PDU (couldn't find them in specs but observed in real systems)
 * Fix integers converted to strings
+* Fix integer pack format for `size=4`, closes #51
 
 ### 1.0.3
 

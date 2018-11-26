@@ -215,9 +215,9 @@ class Command(pdu.PDU):
                 field_value = field_value[0:self.params[field].max - 1]
 
             if field_value:
-                field_length = len(field_value)
                 fvalue = field_value + chr(0)
-                value = struct.pack(">HH", field_code, field_length) + fvalue
+                field_length = len(fvalue)
+                value = struct.pack(">HH", field_code, field_length) + fvalue.encode()
             else:
                 value = None  # chr(0)
         return value
@@ -421,7 +421,7 @@ class BindTransmitterResp(Command):
     """Response for bind as a transmitter command"""
 
     params = {
-        'system_id': Param(type=str),
+        'system_id': Param(type=str, max=16),
         'sc_interface_version': Param(type=int, size=1),
     }
 

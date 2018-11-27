@@ -1,5 +1,6 @@
 ### 1.1 (unreleased)
 
+* Fix `TypeError` in `_generate_string_tlv` when encoding a value
 * Support context manager interface, move `__del__` functionality to `__exit__`
 * Change `callback_num` type to Octet String
 * Add message state and network type constants

@@ -1,14 +1,62 @@
-# Python CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-python/ for more details
-#
 version: 2
-
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-3.7
+      - test-3.6
+      - test-3.5
+      - test-3.4
+      - test-2.7
+      - test-pypy3
+      - test-pypy2
 jobs:
-  build:
-    working_directory: ~/your_thing
+  test-3.7: &test-template
     docker:
-      - image: themattrix/tox
+      - image: python:3.7
+    working_directory: ~/work
     steps:
       - checkout
-      - run: tox
+      - run:
+          name: Install dependencies
+          command: |
+            python -m venv venv || pypy -m venv venv || (
+                pip install virtualenv && virtualenv ./venv ||
+                virtualenv -p "$(which python || which pypy)" ./venv
+            )
+            . venv/bin/activate
+            pip install pytest mock
+      - run:
+          name: Install project
+          command: |
+              . venv/bin/activate
+              pip install -e .
+      - run:
+          name: Run tests
+          command: |
+            . venv/bin/activate
+            pytest -v
+  test-3.6:
+    <<: *test-template
+    docker:
+      - image: python:3.6-alpine
+  test-3.5:
+    <<: *test-template
+    docker:
+      - image: python:3.5-alpine
+  test-3.4:
+    <<: *test-template
+    docker:
+      - image: python:3.4-alpine
+  test-2.7:
+    <<: *test-template
+    docker:
+      - image: python:2.7-alpine
+  test-pypy3:
+    <<: *test-template
+    docker:
+      - image: pypy:3-slim
+  test-pypy2:
+    <<: *test-template
+    docker:
+      - image: pypy:2-slim

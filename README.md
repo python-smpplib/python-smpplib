@@ -1,4 +1,4 @@
-`python-libsmpp`
+`python-smpplib`
 ================
 
 [![CircleCI](https://circleci.com/gh/python-smpplib/python-smpplib.svg?style=svg)](https://circleci.com/gh/python-smpplib/python-smpplib)

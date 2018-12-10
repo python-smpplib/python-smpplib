@@ -5,7 +5,7 @@ setup(
     version='1.1',
     url='https://github.com/podshumok/python-smpplib',
     description='SMPP library for python',
-    long_description=open('README.md', 'rt').read(),
+    long_description=open('README.md', 'rt', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     packages=find_packages(),
     install_requires=['six'],

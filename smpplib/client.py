@@ -32,7 +32,8 @@ from . import smpp
 from . import exceptions
 from . import consts
 
-logger = logging.getLogger('smpplib.client')
+#logger = logging.getLogger('smpplib.client')
+logger = logging.getLogger(__name__)
 
 class SimpleSequenceGenerator(object):
 
@@ -204,6 +205,7 @@ class Client(object):
         except socket.timeout:
             raise
         except socket.error as e:
+            print str(e)
             logger.warning(e)
             raise exceptions.ConnectionError()
         if not raw_len:
@@ -265,7 +267,11 @@ class Client(object):
     def set_message_sent_handler(self, func):
         """Set new function to handle message sent event"""
         self.message_sent_handler = func
-
+    
+    def set_unbind_handler(self, func):
+        """Set new function to handle message sent event"""
+        self.unbind_handler = func
+        
     @staticmethod
     def message_received_handler(pdu, **kwargs):
         """Custom handler to process received message. May be overridden"""
@@ -278,7 +284,11 @@ class Client(object):
         May be overridden"""
         logger.warning('Message sent handler (Override me)')
 
-
+    @staticmethod
+    def unbind_handler(pdu, **kwargs):
+        """Custom handler to process unbind. May be overridden"""
+        logger.warning('unbind received handler (Override me)')
+        
     def read_once(self, ignore_error_codes=None):
         """Read a PDU and act"""
         try:
@@ -296,16 +306,10 @@ class Client(object):
                     consts.DESCRIPTIONS.get(p.status, 'Unknown status')), int(p.status))
 
             if p.command == 'unbind':  # unbind_res
+                print 'Unbind command received'
                 logger.warning('Unbind command received')
-                try:
-	                if self.receiver_mode:
-	                	self.bind_receiver(system_id=self.sysid, password=self.passwd, system_type='', addr_ton=1, addr_npi=1)
-	                else:
-	                	self.bind_transmitter(system_id=self.sysid, password=self.passwd, system_type='', addr_ton=1, addr_npi=1)
-                except Exception:
-                	logger.warning('Rebind fail, sysid[%s] mode[%s]' % (self.sysid, self.receiver_mode))
-	                self.state = consts.SMPP_CLIENT_STATE_OPEN
-	                raise exceptions.ConnectionError()                
+                self.state = consts.SMPP_CLIENT_STATE_OPEN
+                self.unbind_handler(p)               
             elif p.command == 'submit_sm_resp':
                 self.message_sent_handler(pdu=p)
             elif p.command == 'deliver_sm':
@@ -317,6 +321,7 @@ class Client(object):
             elif p.command == 'alert_notification':
                 self._alert_notification(p)
             else:
+                print 'Unhandled SMPP command "%s"', p.command
                 logger.warning('Unhandled SMPP command "%s"', p.command)
         except exceptions.PDUError as e:
             if ignore_error_codes \

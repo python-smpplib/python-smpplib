@@ -30,8 +30,7 @@ import struct
 
 from smpplib import consts, exceptions, smpp
 
-logger = logging.getLogger('smpplib.client')
-
+logger = logging.getLogger(__name__)
 
 class SimpleSequenceGenerator(object):
 
@@ -98,7 +97,7 @@ class Client(object):
     def next_sequence(self):
         return self.sequence_generator.next_sequence()
 
-    def connect(self):
+    def connect(self, timeout=5):
         """Connect to SMSC"""
 
         logger.info('Connecting to %s:%s...', self.host, self.port)
@@ -106,7 +105,8 @@ class Client(object):
         try:
             if self._socket is None:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.connect((self.host, self.port))
+                self._socket.settimeout(timeout)
+            self._socket.connect((self.host, self.port))            
             self.state = consts.SMPP_CLIENT_STATE_OPEN
         except socket.error:
             raise exceptions.ConnectionError("Connection refused")
@@ -264,7 +264,11 @@ class Client(object):
     def set_message_sent_handler(self, func):
         """Set new function to handle message sent event"""
         self.message_sent_handler = func
-
+    
+    def set_unbind_handler(self, func):
+        """Set new function to handle message sent event"""
+        self.unbind_handler = func
+        
     @staticmethod
     def message_received_handler(pdu, **kwargs):
         """Custom handler to process received message. May be overridden"""
@@ -279,6 +283,11 @@ class Client(object):
         """
         logger.warning('Message sent handler (Override me)')
 
+    @staticmethod
+    def unbind_handler(pdu, **kwargs):
+        """Custom handler to process unbind. May be overridden"""
+        logger.warning('unbind received handler (Override me)')
+        
     def read_once(self, ignore_error_codes=None):
         """Read a PDU and act"""
         try:
@@ -299,8 +308,9 @@ class Client(object):
                 )
 
             if pdu.command == 'unbind':  # unbind_res
-                logger.info('Unbind command received')
-                return
+                logger.warning('Unbind command received')
+                self.state = consts.SMPP_CLIENT_STATE_OPEN
+                self.unbind_handler(pdu) 
             elif pdu.command == 'submit_sm_resp':
                 self.message_sent_handler(pdu=pdu)
             elif pdu.command == 'deliver_sm':

@@ -390,14 +390,14 @@ class Param(object):
         if kwargs.get('type') not in (int, str, ostr, flag):
             raise ValueError("Invalid parameter type: %s" % kwargs.get('type'))
 
-        valid_keys = ('type', 'size', 'min', 'max', 'len_field')
+        valid_keys = ('type', 'size', 'min', 'max', 'len_field', 'udhi_field')
         for k in kwargs:
             if k not in valid_keys:
                 raise KeyError("Key '%s' not allowed here" % k)
 
         self.type = kwargs.get('type')
 
-        for param in ('size', 'min', 'max', 'len_field'):
+        for param in ('size', 'min', 'max', 'len_field', 'udhi_field'):
             if param in kwargs:
                 setattr(self, param, kwargs[param])
 

@@ -228,9 +228,9 @@ SMPP_SME_ACK_BOTH = 0x0C  # Both Delivery and Manual/User Acknowledgment request
 
 
 # Intermediate Notification (bit 5).
-SMPP_INT_NOTIFICIATION_BITMASK = 0x10
-SMPP_INT_NOTIFICIATION_NONE = 0x00  # No Intermediate notification requested (default)
-SMPP_INT_NOTIFICIATION_REQUESTED = 0x10  # Intermediate notification requested
+SMPP_INT_NOTIFICATION_BITMASK = 0x10
+SMPP_INT_NOTIFICATION_NONE = 0x00  # No Intermediate notification requested (default)
+SMPP_INT_NOTIFICATION_REQUESTED = 0x10  # Intermediate notification requested
 
 
 # SMPP protocol versions.

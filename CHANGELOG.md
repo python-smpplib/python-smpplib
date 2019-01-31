@@ -9,6 +9,7 @@
 * Fix integers converted to strings
 * Fix integer pack format for `size=4`, closes #51
 * Fix typos in `SMPP_INT_NOTIFICATION_*` constants
+* Raise an error if `message_payload` is used together with `short_message`
 
 ### `1.0.3`
 

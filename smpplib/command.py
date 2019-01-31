@@ -702,9 +702,9 @@ class SubmitSM(Command):
         """Prepare to generate binary data"""
 
         if self.short_message:
+            if getattr(self, 'message_payload', None):
+                raise ValueError('`message_payload` can not be used with `short_message`')
             self.sm_length = len(self.short_message)
-            if hasattr(self, 'message_payload'):
-                delattr(self, 'message_payload')
         else:
             self.sm_length = 0
 

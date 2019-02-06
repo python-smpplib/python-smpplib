@@ -1,4 +1,4 @@
-### `2.0` (unreleased)
+### `2.0`
 
 * Fix `TypeError` in `_generate_string_tlv` when encoding a value
 * Support context manager interface, move `__del__` functionality to `__exit__`

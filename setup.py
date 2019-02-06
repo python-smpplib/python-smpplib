@@ -3,8 +3,8 @@ import io
 from setuptools import find_packages, setup
 
 setup(
-    name='python-smpplib',
-    version='1.1',
+    name='smpplib',
+    version='2.0',
     url='https://github.com/podshumok/python-smpplib',
     description='SMPP library for python',
     long_description=io.open('README.md', 'rt', encoding='utf-8').read(),

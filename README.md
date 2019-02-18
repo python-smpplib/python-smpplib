@@ -1,9 +1,9 @@
 `python-smpplib`
 ================
 
-![Version](https://img.shields.io/pypi/v/smpplib.svg?style=flat)
-![PyPI versions](https://img.shields.io/pypi/pyversions/smpplib.svg?style=flat)
-![PyPI downloads](https://img.shields.io/pypi/dm/smpplib.svg?style=flat)
+[![Version](https://img.shields.io/pypi/v/smpplib.svg?style=flat)](https://pypi.org/project/smpplib/#history)
+[![Python versions](https://img.shields.io/pypi/pyversions/smpplib.svg?style=flat)](https://pypi.org/project/smpplib/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/smpplib.svg?style=flat)](https://pypi.org/project/smpplib/#files)
 ![License](https://img.shields.io/pypi/l/smpplib.svg?style=flat)
 [![CircleCI](https://circleci.com/gh/python-smpplib/python-smpplib.svg?style=svg)](https://circleci.com/gh/python-smpplib/python-smpplib)
 

@@ -217,8 +217,9 @@ class Client(object):
             logger.warning('Receive broken pdu... %s', repr(raw_len))
             raise exceptions.PDUError('Broken PDU')
 
-        raw_pdu = self._socket.recv(length - 4)
-        raw_pdu = raw_len + raw_pdu
+        raw_pdu = raw_len
+        while len(raw_pdu) < length:
+            raw_pdu += self._socket.recv(length - len(raw_pdu))
 
         logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
 

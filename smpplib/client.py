@@ -89,7 +89,7 @@ class Client(object):
 
     def __del__(self):
         if self._socket is not None:
-            logger.warning('%s was not closed' % self)
+            logger.warning('%s was not closed', self)
 
     @property
     def sequence(self):
@@ -116,7 +116,7 @@ class Client(object):
         logger.info('Disconnecting...')
 
         if self.state != consts.SMPP_CLIENT_STATE_OPEN:
-            logger.warning('%s is disconnecting in the bound state' % self)
+            logger.warning('%s is disconnecting in the bound state', self)
         if self._socket is not None:
             self._socket.close()
             self._socket = None

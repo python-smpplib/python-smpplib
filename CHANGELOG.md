@@ -1,3 +1,5 @@
+* Fix: don't use `%` operator in logging
+
 ### `2.0`
 
 * Fix `TypeError` in `_generate_string_tlv` when encoding a value

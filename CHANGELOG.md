@@ -1,3 +1,5 @@
+### `2.0.1`
+
 * Fix: don't use `%` operator in logging
 
 ### `2.0`

@@ -1,3 +1,7 @@
+### `master`
+
+* Wait for the full PDU before parsing #82
+
 ### `2.0.1`
 
 * Fix: don't use `%` operator in logging

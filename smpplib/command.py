@@ -51,6 +51,8 @@ def factory(command_name, **kwargs):
             'submit_sm_resp': SubmitSMResp,
             'deliver_sm': DeliverSM,
             'deliver_sm_resp': DeliverSMResp,
+            'query_sm': QuerySM,
+            'query_sm_resp': QuerySMResp,
             'unbind': Unbind,
             'unbind_resp': UnbindResp,
             'enquire_link': EnquireLink,
@@ -344,7 +346,9 @@ class Command(pdu.PDU):
     def field_is_optional(self, field):
         """Return True if field is optional, False otherwise"""
 
-        if field in consts.OPTIONAL_PARAMS:
+        if hasattr(self, 'mandatory_fields') and field in self.mandatory_fields:
+            return False
+        elif field in consts.OPTIONAL_PARAMS:
             return True
         elif self.is_vendor():
             # FIXME: No vendor support yet
@@ -801,6 +805,70 @@ class DeliverSMResp(SubmitSMResp):
 
     def __init__(self, command, **kwargs):
         super(DeliverSMResp, self).__init__(command, **kwargs)
+
+class QuerySM(Command):
+    """query_sm command class
+
+    This command is used by an ESME to query the state of a short message to the SMSC.
+    source_addr* values must match those supplied when the message was submitted."""
+
+    # Message ID of the message whose state is to be queried.
+    message_id = None
+
+    # Type of Number for source address
+    source_addr_ton = None
+
+    # Numbering Plan Indicator for source address
+    source_addr_npi = None
+
+    # Address of SME which originated this message
+    source_addr = None
+
+    # Optional are taken from params list and are set dynamically when
+    # __init__ is called.
+    params = {
+        'message_id': Param(type=str, max=65),
+        'source_addr_ton': Param(type=int, size=1),
+        'source_addr_npi': Param(type=int, size=1),
+        'source_addr': Param(type=str, max=21),
+    }
+
+    params_order = (
+        'message_id', 'source_addr_ton', 'source_addr_npi',
+        'source_addr',
+    )
+
+    def __init__(self, command, **kwargs):
+        super(QuerySM, self).__init__(command, **kwargs)
+        self._set_vars(**(dict.fromkeys(self.params)))
+
+    def prep(self):
+        """Prepare to generate binary data"""
+
+        if not self.message_id:
+            raise ValueError('`message_id` is mandatory')
+
+
+class QuerySMResp(Command):
+    """Response command for query_sm"""
+
+    mandatory_fields = ('message_state')
+
+    params = {
+        'message_id': Param(type=str, max=65),
+        'final_date': Param(type=str, max=17),
+        'message_state': Param(type=int, size=1),
+        'error_code': Param(type=int, size=1),
+    }
+
+    params_order = (
+        'message_id', 'final_date', 'message_state',
+        'error_code',
+    )
+
+    def __init__(self, command, **kwargs):
+        super(QuerySMResp, self).__init__(command, need_sequence=False, **kwargs)
+        self._set_vars(**(dict.fromkeys(self.params)))
 
 
 class Unbind(Command):

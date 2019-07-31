@@ -265,6 +265,10 @@ class Client(object):
     def set_message_sent_handler(self, func):
         """Set new function to handle message sent event"""
         self.message_sent_handler = func
+        
+    def set_query_resp_handler(self, func):
+        """Set new function to handle query resp event"""
+        self.query_resp_handler = func
 
     @staticmethod
     def message_received_handler(pdu, **kwargs):
@@ -279,6 +283,12 @@ class Client(object):
         May be overridden
         """
         logger.warning('Message sent handler (Override me)')
+
+    @staticmethod
+    def query_resp_handler(pdu, **kwargs):
+        """Custom handler to process response to queries. May be overridden"""
+
+        logger.warning('Query resp handler (Override me)')
 
     def read_once(self, ignore_error_codes=None):
         """Read a PDU and act"""
@@ -306,6 +316,8 @@ class Client(object):
                 self.message_sent_handler(pdu=pdu)
             elif pdu.command == 'deliver_sm':
                 self._message_received(pdu)
+            elif pdu.command == 'query_sm_resp':
+                self.query_resp_handler(pdu)
             elif pdu.command == 'enquire_link':
                 self._enquire_link_received()
             elif pdu.command == 'enquire_link_resp':
@@ -347,3 +359,17 @@ class Client(object):
         ssm = smpp.make_pdu('submit_sm', client=self, **kwargs)
         self.send_pdu(ssm)
         return ssm
+
+    def query_message(self, **kwargs):
+        """Query message state
+
+        Required Arguments:
+            message_id -- SMSC assigned Message ID
+            source_addr_ton -- Original source address TON
+            source_addr_npi -- Original source address NPI
+            source_addr -- Original source address (string)
+        """
+
+        qsm = smpp.make_pdu('query_sm', client=self, **kwargs)
+        self.send_pdu(qsm)
+        return qsm

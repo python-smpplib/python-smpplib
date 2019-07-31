@@ -6,7 +6,7 @@ import six
 from smpplib import consts, exceptions
 
 
-def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT):
+def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT, use_udhi=True):
     """Returns tuple(parts, encoding, esm_class)"""
     try:
         # Try to encode with the user-defined encoding first.
@@ -21,11 +21,18 @@ def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT):
         encoded_text = encode(text)
 
     if len(text) > split_length:
-        # Split the text into well-formed parts.
-        esm_class = consts.SMPP_GSMFEAT_UDHI
-        # FIXME: 7-bit encoding has variable-length characters.
-        # FIXME: it means that a character may be broken by splitting.
-        parts = make_parts_encoded(encoded_text, part_size)
+        if use_udhi:
+            # Split the text into well-formed parts.
+            esm_class = consts.SMPP_GSMFEAT_UDHI
+            # FIXME: 7-bit encoding has variable-length characters.
+            # FIXME: it means that a character may be broken by splitting.
+            parts = make_parts_encoded(encoded_text, part_size)
+        else:
+            # We will have to use SaR to send the message
+            esm_class = consts.SMPP_MSGTYPE_DEFAULT
+            parts = split_sequence(encoded_text, part_size)
+            if len(parts) > 255:
+                raise exceptions.MessageTooLong()
     else:
         # Normal message.
         esm_class = consts.SMPP_MSGTYPE_DEFAULT

@@ -118,7 +118,7 @@ class PDU(object):
             raise ValueError("Invalid PDU command: %s", self.command)
 
         if PDU.dlr_regex is None:
-            PDU.dlr_regex = re.compile(rb'^id:(?P<id>\S+)\s+sub:(?P<sub>\S+)\s+dlvrd:(?P<dlvrd>\S+)\s+submit date:(?P<submit_date>\S+)\s+done date:(?P<done_date>\S+)\s+stat:(?P<stat>\S+)\s+err:(?P<err>\S+)\s+Text:(?P<text>.*)$', re.IGNORECASE)
+            PDU.dlr_regex = re.compile(br'^id:(?P<id>\S+)\s+sub:(?P<sub>\S+)\s+dlvrd:(?P<dlvrd>\S+)\s+submit date:(?P<submit_date>\S+)\s+done date:(?P<done_date>\S+)\s+stat:(?P<stat>\S+)\s+err:(?P<err>\S+)\s+Text:(?P<text>.*)$', re.IGNORECASE)
 
         return PDU.dlr_regex.match(self.short_message).groupdict()
 

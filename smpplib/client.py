@@ -38,8 +38,8 @@ class SimpleSequenceGenerator(object):
     MIN_SEQUENCE = 0x00000001
     MAX_SEQUENCE = 0x7FFFFFFF
 
-    def __init__(self):
-        self._sequence = self.MIN_SEQUENCE
+    def __init__(self, start_sequence=None):
+        self._sequence = start_sequence or self.MIN_SEQUENCE
 
     @property
     def sequence(self):
@@ -64,13 +64,13 @@ class Client(object):
     _socket = None
     sequence_generator = None
 
-    def __init__(self, host, port, timeout=5, sequence_generator=None):
+    def __init__(self, host, port, timeout=5, sequence_generator=None, start_sequence=None):
         self.host = host
         self.port = int(port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(timeout)
         if sequence_generator is None:
-            sequence_generator = SimpleSequenceGenerator()
+            sequence_generator = SimpleSequenceGenerator(start_sequence=start_sequence)
         self.sequence_generator = sequence_generator
 
     def __enter__(self):

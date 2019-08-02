@@ -202,7 +202,8 @@ SMPP_UDHIEIE_CONCATENATED = 0x00  # Concatenated short message, 8-bit ref
 SMPP_UDHIEIE_SPECIAL = 0x01
 SMPP_UDHIEIE_RESERVED = 0x02
 SMPP_UDHIEIE_PORT8 = 0x04
-SMPP_UDHIEIE_PORT16 = 0x04
+SMPP_UDHIEIE_PORT16 = 0x05
+SMPP_UDHIEIE_CONCATENATED16 = 0x08
 
 
 # `ms_availability_status` parameter from `alert_notification` operation.

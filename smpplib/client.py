@@ -248,11 +248,11 @@ class Client(object):
         dsmr.sequence = pdu.sequence
         self.send_pdu(dsmr)
 
-    def _enquire_link_received(self):
+    def _enquire_link_received(self, pdu):
         """Response to enquire_link"""
         ler = smpp.make_pdu('enquire_link_resp', client=self)
+        ler.sequence = pdu.sequence
         self.send_pdu(ler)
-        logger.debug("Link Enquiry...")
 
     def _alert_notification(self, pdu):
         """Handler for alert notification event"""
@@ -319,7 +319,7 @@ class Client(object):
             elif pdu.command == 'query_sm_resp':
                 self.query_resp_handler(pdu)
             elif pdu.command == 'enquire_link':
-                self._enquire_link_received()
+                self._enquire_link_received(pdu)
             elif pdu.command == 'enquire_link_resp':
                 pass
             elif pdu.command == 'alert_notification':

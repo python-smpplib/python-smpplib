@@ -75,13 +75,13 @@ class Client(object):
     _socket = None
     sequence_generator = None
 
-    def __init__(self, host, port, timeout=5, sequence_generator=None, start_sequence=None):
+    def __init__(self, host, port, timeout=5, sequence_generator=None):
         self.host = host
         self.port = int(port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(timeout)
         if sequence_generator is None:
-            sequence_generator = SimpleSequenceGenerator(start_sequence=start_sequence)
+            sequence_generator = SimpleSequenceGenerator()
         self.sequence_generator = sequence_generator
 
     def __enter__(self):

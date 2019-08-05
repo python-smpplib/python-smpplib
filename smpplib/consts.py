@@ -382,8 +382,3 @@ INT_PACK_FORMATS = {
     2: 'H',
     4: 'L',
 }
-
-#UDHI indicator in esm_class(01xxxxxx)
-UDHI_INDICATOR_SET = 0x40
-#Set the reply path esm_class(10xxxxxx)
-SET_REPLY_PATH = 0x80

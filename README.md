@@ -63,16 +63,23 @@ t = Thread(target=client.listen)
 t.start()
 ```
 
-The client supports setting a custom generator that produces sequence numbers for the PDU packages. Per default a simple in memory generator is used which in conclusion is reset on (re)instantiation of the client, e.g. by an application restart. If you want to keep the sequence number to be persisted across restarts you can implement your own storage backed generator.
+The client supports setting a custom generator that produces sequence numbers for the PDU packages. Per default a simple in memory generator is used which in conclusion is reset on (re)instantiation of the client, e.g. by an application restart. You may also set the starting sequence yourself by declaring the generator beforehand and passing it to the Client:
+```python
+import smpplib.client
 
-Example:
+generator = smpplib.client.SimpleSequenceGenerator(start_sequence=1234)
+client = smpplib.client.Client('example.com', SOMEPORTNUMBER, sequence_generator=generator)
+...
+```
 
+
+If you need more/different features associated with the generator, you can implement your own:
 ```python
 import smpplib.client
 
 import mymodule
 
-generator = mymodule.PersistentSequenceGenerator()
+generator = mymodule.MyAwesomeSequenceGenerator()
 client = smpplib.client.Client('example.com', SOMEPORTNUMBER, sequence_generator=generator)
 ...
 ```

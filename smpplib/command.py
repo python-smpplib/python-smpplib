@@ -281,7 +281,7 @@ class Command(pdu.PDU):
         udhi_flag = int(getattr(self, udhi_field))
 
         #01xxxxxx UDHI, only for MT message
-        if udhi_flag & consts.UDHI_INDICATOR_SET: 
+        if udhi_flag & consts.SMPP_GSMFEAT_UDHI: 
             udhi_data = struct.unpack(">" + "b", data[pos:pos + 1])
             udhi_len = int(udhi_data[0])
             length = length - udhi_len - 1

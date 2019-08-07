@@ -54,6 +54,8 @@ for part in parts:
         registered_delivery=True,
     )
     print(pdu.sequence)
+    
+# Enters a loop, waiting for incoming PDUs
 client.listen()
 ```
 You also may want to listen in a thread:
@@ -62,6 +64,7 @@ from threading import Thread
 t = Thread(target=client.listen)
 t.start()
 ```
+**Note:** When listening, the client will automatically send an `enquire_link` command when the socket timeouts. You may override that behavior by passing `auto_send_enquire_link=False` as an argument to `listen()`. In that case, `socket.timeout` exceptions will bubble up.
 
 The client supports setting a custom generator that produces sequence numbers for the PDU packages. Per default a simple in memory generator is used which in conclusion is reset on (re)instantiation of the client, e.g. by an application restart. If you want to keep the sequence number to be persisted across restarts you can implement your own storage backed generator.
 

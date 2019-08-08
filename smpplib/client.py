@@ -290,12 +290,14 @@ class Client(object):
 
         logger.warning('Query resp handler (Override me)')
 
-    def read_once(self, ignore_error_codes=None):
+    def read_once(self, ignore_error_codes=None, auto_send_enquire_link=True):
         """Read a PDU and act"""
         try:
             try:
                 pdu = self.read_pdu()
             except socket.timeout:
+                if not auto_send_enquire_link:
+                    raise
                 logger.debug('Socket timeout, listening again')
                 pdu = smpp.make_pdu('enquire_link', client=self)
                 self.send_pdu(pdu)
@@ -332,18 +334,18 @@ class Client(object):
             else:
                 raise
 
-    def poll(self, ignore_error_codes=None):
+    def poll(self, ignore_error_codes=None, auto_send_enquire_link=True):
         """Act on available PDUs and return"""
         while True:
             readable, writable, exceptional = select.select([self._socket], [], [], 0)
             if not readable:
                 break
-            self.read_once(ignore_error_codes)
+            self.read_once(ignore_error_codes, auto_send_enquire_link)
 
-    def listen(self, ignore_error_codes=None):
+    def listen(self, ignore_error_codes=None, auto_send_enquire_link=True):
         """Listen for PDUs and act"""
         while True:
-            self.read_once(ignore_error_codes)
+            self.read_once(ignore_error_codes, auto_send_enquire_link)
 
     def send_message(self, **kwargs):
         """Send message

@@ -1,6 +1,11 @@
 ### `master`
 
-* Wait for the full PDU before parsing #82
+* New: add option to not use UDHI when splitting long SMS
+* New: add `query_sm` & `query_sm_resp` support
+* New: argument to make automatic `enquire_link` optional
+* Fix: incorrect `SMPP_UDHIEIE_PORT16` constant #81
+* Fix: `enquire_link_resp` now echo original sequence
+* Fix: wait for the full PDU before parsing #82
 
 ### `2.0.1`
 

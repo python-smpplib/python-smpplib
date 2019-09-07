@@ -28,6 +28,7 @@ import select
 import socket
 import struct
 
+from time import sleep
 from smpplib import consts, exceptions, smpp
 
 logger = logging.getLogger('smpplib.client')
@@ -64,11 +65,13 @@ class Client(object):
     _socket = None
     sequence_generator = None
 
-    def __init__(self, host, port, timeout=5, sequence_generator=None):
+    def __init__(self, host, port, timeout=5, sequence_generator=None, max_outstanding_operation=None):
         self.host = host
         self.port = int(port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.settimeout(timeout)
+        self.outstanding_operations = 0
+        self.max_outstanding_operations = max_outstanding_operation
         if sequence_generator is None:
             sequence_generator = SimpleSequenceGenerator()
         self.sequence_generator = sequence_generator
@@ -176,6 +179,10 @@ class Client(object):
                 consts.DESCRIPTIONS[consts.SMPP_ESME_RINVBNDSTS],
             ))
 
+        if self.max_outstanding_operations:
+            while self.outstanding_operations >= self.max_outstanding_operations:
+                sleep(.1)
+
         logger.debug('Sending %s PDU', p.command)
 
         generated = p.generate()
@@ -194,12 +201,16 @@ class Client(object):
                 raise exceptions.ConnectionError()
             sent += sent_last
 
+        self.outstanding_operations += 1
         return True
 
     def read_pdu(self):
         """Read PDU from the SMSC"""
 
         logger.debug('Waiting for PDU...')
+
+        if self.outstanding_operations <= 0:
+            self.logger.warning('Number of outstanding operations <= 0')
 
         try:
             raw_len = self._socket.recv(4)
@@ -226,6 +237,8 @@ class Client(object):
         pdu = smpp.parse_pdu(raw_pdu, client=self)
 
         logger.debug('Read %s PDU', pdu.command)
+
+        self.outstanding_operations -= 1
 
         if pdu.is_error():
             return pdu

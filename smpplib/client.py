@@ -179,7 +179,7 @@ class Client(object):
                 consts.DESCRIPTIONS[consts.SMPP_ESME_RINVBNDSTS],
             ))
 
-        if self.max_outstanding_operations:
+        if self.max_outstanding_operations and p.command[-5:] != '_resp':
             while self.outstanding_operations >= self.max_outstanding_operations:
                 sleep(.1)
 
@@ -201,7 +201,11 @@ class Client(object):
                 raise exceptions.ConnectionError()
             sent += sent_last
 
-        self.outstanding_operations += 1
+        if p.command[-5:] == '_resp':
+            self.outstanding_operations -= 1
+        else:
+            self.outstanding_operations += 1
+
         return True
 
     def read_pdu(self):
@@ -209,8 +213,12 @@ class Client(object):
 
         logger.debug('Waiting for PDU...')
 
-        if self.outstanding_operations <= 0:
-            self.logger.warning('Number of outstanding operations <= 0')
+        if pdu.command[-5:] == '_resp':
+            self.outstanding_operations -= 1
+                if self.outstanding_operations < 0:
+                    self.logger.warning('Number of outstanding operations < 0')
+        else:
+            self.outstanding_operations += 1
 
         try:
             raw_len = self._socket.recv(4)
@@ -237,8 +245,6 @@ class Client(object):
         pdu = smpp.parse_pdu(raw_pdu, client=self)
 
         logger.debug('Read %s PDU', pdu.command)
-
-        self.outstanding_operations -= 1
 
         if pdu.is_error():
             return pdu

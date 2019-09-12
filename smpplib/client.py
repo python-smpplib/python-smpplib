@@ -215,8 +215,8 @@ class Client(object):
 
         if pdu.command[-5:] == '_resp':
             self.outstanding_operations -= 1
-                if self.outstanding_operations < 0:
-                    self.logger.warning('Number of outstanding operations < 0')
+            if self.outstanding_operations < 0:
+                self.logger.warning('Number of outstanding operations < 0')
         else:
             self.outstanding_operations += 1
 

@@ -66,7 +66,7 @@ class Client(object):
         self.host = host
         self.port = int(port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.settimeout(timeout)
+        self.timeout = timeout
         self.logger = logging.getLogger(logger_name or 'smpp.Client.{}'.format(id(self)))
         if sequence_generator is None:
             sequence_generator = SimpleSequenceGenerator()
@@ -105,6 +105,7 @@ class Client(object):
         try:
             if self._socket is None:
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self._socket.settimeout(self.timeout)
             self._socket.connect((self.host, self.port))
             self.state = consts.SMPP_CLIENT_STATE_OPEN
         except socket.error:

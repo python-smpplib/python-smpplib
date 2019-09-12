@@ -6,6 +6,7 @@
 * Fix: incorrect `SMPP_UDHIEIE_PORT16` constant #81
 * Fix: `enquire_link_resp` now echo original sequence
 * Fix: wait for the full PDU before parsing #82
+* Fix: add timeout to Client's properties #98 by @Lynesth
 
 ### `2.0.1`
 

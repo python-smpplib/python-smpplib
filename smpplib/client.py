@@ -188,7 +188,7 @@ class Client(object):
             try:
                 sent_last = self._socket.send(generated[sent:])
             except socket.error as e:
-                logger.warning(e)
+                self.logger.warning(e)
                 raise exceptions.ConnectionError()
             if sent_last == 0:
                 raise exceptions.ConnectionError()
@@ -270,24 +270,19 @@ class Client(object):
         """Set new function to handle query resp event"""
         self.query_resp_handler = func
 
-    @staticmethod
-    def message_received_handler(pdu, **kwargs):
+    def message_received_handler(self, pdu, **kwargs):
         """Custom handler to process received message. May be overridden"""
-
         self.logger.warning('Message received handler (Override me)')
 
-    @staticmethod
-    def message_sent_handler(pdu, **kwargs):
+    def message_sent_handler(self, pdu, **kwargs):
         """
         Called when SMPP server accept message (SUBMIT_SM_RESP).
         May be overridden
         """
         self.logger.warning('Message sent handler (Override me)')
 
-    @staticmethod
-    def query_resp_handler(pdu, **kwargs):
+    def query_resp_handler(self, pdu, **kwargs):
         """Custom handler to process response to queries. May be overridden"""
-
         self.logger.warning('Query resp handler (Override me)')
 
     def read_once(self, ignore_error_codes=None, auto_send_enquire_link=True):
@@ -337,7 +332,7 @@ class Client(object):
     def poll(self, ignore_error_codes=None, auto_send_enquire_link=True):
         """Act on available PDUs and return"""
         while True:
-            readable, writable, exceptional = select.select([self._socket], [], [], 0)
+            readable, _writable, _exceptional = select.select([self._socket], [], [], 0)
             if not readable:
                 break
             self.read_once(ignore_error_codes, auto_send_enquire_link)

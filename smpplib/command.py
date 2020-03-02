@@ -198,7 +198,7 @@ class Command(pdu.PDU):
         field_code = get_optional_code(field)
         field_length = self.params[field].size
         value = None
-        if data:
+        if data is not None:
             value = struct.pack(">HH" + fmt, field_code, field_length, data)
         return value
 
@@ -499,7 +499,7 @@ class DataSM(Command):
         'ms_validity': Param(type=int, size=1),
         'ms_msg_wait_facilities': Param(type=int, size=1),
         'number_of_messages': Param(type=int, size=1),
-        'alert_on_msg_delivery': Param(type=flag),
+        'alert_on_message_delivery': Param(type=flag),
         'language_indicator': Param(type=int, size=1),
         'its_reply_type': Param(type=int, size=1),
         'its_session_info': Param(type=int, size=2),
@@ -533,15 +533,28 @@ class DataSM(Command):
 
 class DataSMResp(Command):
     """Reponse command for data_sm"""
+    params = {
+        'message_id': Param(type=str, max=65),
 
-    message_id = None
-    delivery_failure_reason = None
-    network_error_code = None
-    additional_status_info_text = None
-    dpf_result = None
+        # Optional params:
+        #type size is implementation specific.
+        'delivery_failure_reason': Param(type=str, max=256),
+        'network_error_code': Param(type=str, max=3),
+        'additional_status_info_text': Param(type=str, max=256),
+        'dpf_result': Param(type=int, size=1),
+    }
+
+    params_order = (
+        'message_id',
+
+        # Optional params:
+        'delivery_failure_reason', 'network_error_code', 'additional_status_info_text',
+        'dpf_result',
+    )
 
     def __init__(self, command, **kwargs):
         super(DataSMResp, self).__init__(command, **kwargs)
+        self._set_vars(**(dict.fromkeys(self.params)))
 
 
 class GenericNAck(Command):

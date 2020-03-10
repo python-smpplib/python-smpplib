@@ -8,6 +8,7 @@
 * Fix: `enquire_link_resp` now echo original sequence
 * Fix: wait for the full PDU before parsing #82
 * Fix: add timeout to Client's properties #98 by @Lynesth
+* Fix: `DataSM` param naming error: `alert_on_message_delivery` #108 by @nwnoga
 
 ### `2.0.1`
 

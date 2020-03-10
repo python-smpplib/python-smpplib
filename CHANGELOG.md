@@ -1,4 +1,4 @@
-### `master`
+### `2.1.0`
 
 * New: add option to not use UDHI when splitting long SMS
 * New: add `query_sm` & `query_sm_resp` support

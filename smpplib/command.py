@@ -93,8 +93,10 @@ class Command(pdu.PDU):
 
     params = {}
 
-    def __init__(self, command, need_sequence=True, **kwargs):
+    def __init__(self, command, need_sequence=True, allow_unknown_opt_params=False, **kwargs):
         super(Command, self).__init__(**kwargs)
+
+        self.allow_unknown_opt_params = allow_unknown_opt_params
 
         self.command = command
         if need_sequence and (kwargs.get('sequence') is None):
@@ -328,8 +330,17 @@ class Command(pdu.PDU):
 
         while pos < dlen:
             type_code, pos = unpack_short(data, pos)
-            field = get_optional_name(type_code)
             length, pos = unpack_short(data, pos)
+
+            try:
+                field = get_optional_name(type_code)
+            except exceptions.UnknownCommandError as e:
+                if self.allow_unknown_opt_params:
+                    logger.warning("Unknown optional parameter type 0x%x, skipping" % type_code)
+                    pos += length
+                    continue
+                else:
+                    raise
 
             param = self.params[field]
             if param.type is int:

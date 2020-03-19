@@ -63,10 +63,20 @@ class Client(object):
     _ssl_context = None
     sequence_generator = None
 
-    def __init__(self, host, port, timeout=5, sequence_generator=None, logger_name=None, ssl_context=None):
+    def __init__(
+        self,
+        host,
+        port,
+        timeout=5,
+        sequence_generator=None,
+        logger_name=None,
+        ssl_context=None,
+        allow_unknown_opt_params=False
+    ):
         self.host = host
         self.port = int(port)
         self._ssl_context = ssl_context
+        self.allow_unknown_opt_params = allow_unknown_opt_params
         self.timeout = timeout
         self.logger = logging.getLogger(logger_name or 'smpp.Client.{}'.format(id(self)))
         if sequence_generator is None:
@@ -233,7 +243,11 @@ class Client(object):
 
         self.logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
 
-        pdu = smpp.parse_pdu(raw_pdu, client=self)
+        pdu = smpp.parse_pdu(
+            raw_pdu,
+            client=self,
+            allow_unknown_opt_params=self.allow_unknown_opt_params
+        )
 
         self.logger.debug('Read %s PDU', pdu.command)
 

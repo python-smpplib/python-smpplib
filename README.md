@@ -25,7 +25,7 @@ logging.basicConfig(level='DEBUG')
 # Two parts, UCS2, SMS with UDH
 parts, encoding_flag, msg_type_flag = smpplib.gsm.make_parts(u'Привет мир!\n'*10)
 
-client = smpplib.client.Client('example.com', SOMEPORTNUMBER)
+client = smpplib.client.Client('example.com', SOMEPORTNUMBER, allow_unknown_opt_params=True)
 
 # Print when obtain message_id
 client.set_message_sent_handler(

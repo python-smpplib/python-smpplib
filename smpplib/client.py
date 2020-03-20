@@ -60,17 +60,20 @@ class Client(object):
     port = None
     vendor = None
     _socket = None
+    _ssl_context = None
     sequence_generator = None
 
-    def __init__(self, host, port, timeout=5, sequence_generator=None, logger_name=None):
+    def __init__(self, host, port, timeout=5, sequence_generator=None, logger_name=None, ssl_context=None):
         self.host = host
         self.port = int(port)
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._ssl_context = ssl_context
         self.timeout = timeout
         self.logger = logging.getLogger(logger_name or 'smpp.Client.{}'.format(id(self)))
         if sequence_generator is None:
             sequence_generator = SimpleSequenceGenerator()
         self.sequence_generator = sequence_generator
+
+        self._socket = self._create_socket()
 
     def __enter__(self):
         return self
@@ -97,6 +100,13 @@ class Client(object):
     def next_sequence(self):
         return self.sequence_generator.next_sequence()
 
+    def _create_socket(self):
+        raw_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if self._ssl_context is None:
+            return raw_socket
+
+        return ssl_context.wrap_socket(raw_socket)
+
     def connect(self):
         """Connect to SMSC"""
 
@@ -104,7 +114,7 @@ class Client(object):
 
         try:
             if self._socket is None:
-                self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self._socket = self._create_socket()
                 self._socket.settimeout(self.timeout)
             self._socket.connect((self.host, self.port))
             self.state = consts.SMPP_CLIENT_STATE_OPEN

@@ -171,7 +171,7 @@ class Command(pdu.PDU):
             size = self.params[field].size
             value = field_value.ljust(size, chr(0))
         elif hasattr(self.params[field], 'max'):
-            if len(field_value or '') > self.params[field].max:
+            if len(field_value or '') >= self.params[field].max:
                 field_value = field_value[0:self.params[field].max - 1]
 
             if field_value:

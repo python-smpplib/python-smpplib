@@ -125,7 +125,7 @@ class Client(object):
         if self._ssl_context is None:
             return raw_socket
 
-        return ssl_context.wrap_socket(raw_socket)
+        return self._ssl_context.wrap_socket(raw_socket)
 
     def connect(self):
         """Connect to SMSC"""

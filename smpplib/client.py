@@ -27,6 +27,7 @@ import logging
 import select
 import socket
 import struct
+import warnings
 
 from smpplib import consts, exceptions, smpp
 
@@ -71,17 +72,26 @@ class Client(object):
         sequence_generator=None,
         logger_name=None,
         ssl_context=None,
-        allow_unknown_opt_params=False,
+        allow_unknown_opt_params=None,
     ):
         self.host = host
         self.port = int(port)
         self._ssl_context = ssl_context
-        self.allow_unknown_opt_params = allow_unknown_opt_params
         self.timeout = timeout
         self.logger = logging.getLogger(logger_name or 'smpp.Client.{}'.format(id(self)))
         if sequence_generator is None:
             sequence_generator = SimpleSequenceGenerator()
         self.sequence_generator = sequence_generator
+
+        if allow_unknown_opt_params is None:
+            warnings.warn(
+                "Unknown optional parameters during PDU parsing will stop causing an exception in a future smpplib version (in order to comply with the SMPP spec). To switch behaviour now set allow_unknown_opt_params to True.",
+                DeprecationWarning
+            )
+            self.allow_unknown_opt_params = False
+        else:
+            self.allow_unknown_opt_params = allow_unknown_opt_params
+
 
         self._socket = self._create_socket()
 

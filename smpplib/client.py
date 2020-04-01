@@ -71,7 +71,7 @@ class Client(object):
         sequence_generator=None,
         logger_name=None,
         ssl_context=None,
-        allow_unknown_opt_params=False
+        allow_unknown_opt_params=False,
     ):
         self.host = host
         self.port = int(port)
@@ -246,7 +246,7 @@ class Client(object):
         pdu = smpp.parse_pdu(
             raw_pdu,
             client=self,
-            allow_unknown_opt_params=self.allow_unknown_opt_params
+            allow_unknown_opt_params=self.allow_unknown_opt_params,
         )
 
         self.logger.debug('Read %s PDU', pdu.command)

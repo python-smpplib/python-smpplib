@@ -336,11 +336,10 @@ class Command(pdu.PDU):
                 field = get_optional_name(type_code)
             except exceptions.UnknownCommandError as e:
                 if self.allow_unknown_opt_params:
-                    logger.warning("Unknown optional parameter type 0x%x, skipping" % type_code)
+                    logger.warning("Unknown optional parameter type 0x%x, skipping", type_code)
                     pos += length
                     continue
-                else:
-                    raise
+                raise
 
             param = self.params[field]
             if param.type is int:

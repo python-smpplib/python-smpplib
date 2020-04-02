@@ -85,8 +85,11 @@ class Client(object):
 
         if allow_unknown_opt_params is None:
             warnings.warn(
-                "Unknown optional parameters during PDU parsing will stop causing an exception in a future smpplib version (in order to comply with the SMPP spec). To switch behaviour now set allow_unknown_opt_params to True.",
-                DeprecationWarning
+                "Unknown optional parameters during PDU parsing will stop "
+                "causing an exception in a future smpplib version "
+                "(in order to comply with the SMPP spec). To switch behavior "
+                "now set allow_unknown_opt_params to True.",
+                DeprecationWarning,
             )
             self.allow_unknown_opt_params = False
         else:

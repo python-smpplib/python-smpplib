@@ -336,6 +336,14 @@ class Client(object):
 
     def read_once(self, ignore_error_codes=None, auto_send_enquire_link=True):
         """Read a PDU and act"""
+
+        if ignore_error_codes is not None:
+            warnings.warn(
+                "ignore_error_codes is deprecated, use set_error_pdu_handler to "
+                "configure a custom error PDU handler instead.",
+                DeprecationWarning,
+            )
+
         try:
             try:
                 pdu = self.read_pdu()

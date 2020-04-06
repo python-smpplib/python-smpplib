@@ -307,6 +307,10 @@ class Client(object):
         """Set new function to handle query resp event"""
         self.query_resp_handler = func
 
+    def set_error_pdu_handler(self, func):
+        """Set new function to handle PDUs with an error status"""
+        self.error_pdu_handler = func
+
     def message_received_handler(self, pdu, **kwargs):
         """Custom handler to process received message. May be overridden"""
         self.logger.warning('Message received handler (Override me)')
@@ -322,6 +326,14 @@ class Client(object):
         """Custom handler to process response to queries. May be overridden"""
         self.logger.warning('Query resp handler (Override me)')
 
+    def error_pdu_handler(self, pdu):
+        raise exceptions.PDUError('({}) {}: {}'.format(
+            pdu.status,
+            pdu.command,
+            consts.DESCRIPTIONS.get(pdu.status, 'Unknown status')),
+            int(pdu.status),
+        )
+
     def read_once(self, ignore_error_codes=None, auto_send_enquire_link=True):
         """Read a PDU and act"""
         try:
@@ -336,12 +348,7 @@ class Client(object):
                 return
 
             if pdu.is_error():
-                raise exceptions.PDUError('({}) {}: {}'.format(
-                    pdu.status,
-                    pdu.command,
-                    consts.DESCRIPTIONS.get(pdu.status, 'Unknown status')),
-                    int(pdu.status),
-                )
+                self.error_pdu_handler(pdu)
 
             if pdu.command == 'unbind':  # unbind_res
                 self.logger.info('Unbind command received')

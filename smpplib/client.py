@@ -37,8 +37,11 @@ class SimpleSequenceGenerator(object):
     MIN_SEQUENCE = 0x00000001
     MAX_SEQUENCE = 0x7FFFFFFF
 
-    def __init__(self):
-        self._sequence = self.MIN_SEQUENCE
+    def __init__(self, starting_sequence=MIN_SEQUENCE):
+        if starting_sequence < self.MIN_SEQUENCE or starting_sequence > self.MAX_SEQUENCE:
+            starting_sequence = self.MIN_SEQUENCE
+
+        self._sequence = starting_sequence
 
     @property
     def sequence(self):

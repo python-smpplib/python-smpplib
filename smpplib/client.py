@@ -125,6 +125,8 @@ class Client(object):
 
     def _create_socket(self):
         raw_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        raw_socket.settimeout(self.timeout)
+
         if self._ssl_context is None:
             return raw_socket
 
@@ -138,7 +140,6 @@ class Client(object):
         try:
             if self._socket is None:
                 self._socket = self._create_socket()
-                self._socket.settimeout(self.timeout)
             self._socket.connect((self.host, self.port))
             self.state = consts.SMPP_CLIENT_STATE_OPEN
         except socket.error:

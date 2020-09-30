@@ -1,4 +1,4 @@
-`python-smpplib`
+`python-smpplib` for all
 ================
 
 [![Version](https://img.shields.io/pypi/v/smpplib.svg?style=flat)](https://pypi.org/project/smpplib/#history)

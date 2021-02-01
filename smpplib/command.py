@@ -177,11 +177,19 @@ class Command(pdu.PDU):
                 field_value = field_value[0:self.params[field].max - 1]
 
             if field_value:
-                value = field_value + chr(0)
+                if not isinstance(field_value, bytes):
+                    value = field_value + chr(0)
+                else:
+                    value = field_value + chr(0).encode()
             else:
-                value = chr(0)
+                if not isinstance(field_value, bytes):
+                    value = chr(0)
+                else:
+                    value = chr(0).encode()
 
         setattr(self, field, field_value)
+        if isinstance(value, bytes):
+            return value
         return six.b(value)
 
     def _generate_ostring(self, field):

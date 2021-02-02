@@ -188,7 +188,7 @@ class Command(pdu.PDU):
                     value = chr(0).encode()
 
         setattr(self, field, field_value)
-        if isinstance(value, bytes):
+        if isinstance(value, six.binary_type):
             return value
         return six.b(value)
 

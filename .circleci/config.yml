@@ -22,17 +22,15 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            python -m venv venv || pypy -m venv venv || (
+            python -m venv venv || pypy -m venv venv || {
                 pip install virtualenv && virtualenv ./venv ||
-                virtualenv -p "$(which python || which pypy)" ./venv
-            )
-            . venv/bin/activate
-            pip install pytest mock
+                virtualenv -p "$(command -v python || command -v pypy)" ./venv;
+            }
       - run:
           name: Install project
           command: |
               . venv/bin/activate
-              pip install -e .
+              pip install -e .[tests]
       - run:
           name: Run tests
           command: |

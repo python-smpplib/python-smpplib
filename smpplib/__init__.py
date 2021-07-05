@@ -15,9 +15,5 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-#
-#
-# Modified by Yusuf Kaka <yusufk at gmail>
-# Added support for Optional TLV's
 
 from smpplib import client, command, exceptions, pdu, smpp

@@ -2,18 +2,26 @@ import io
 
 from setuptools import find_packages, setup
 
+try:
+    long_description_kwd=dict(
+        long_description=io.open('README.md', 'rt', encoding='utf-8').read(),
+        long_description_content_type='text/markdown',
+    )
+except OSError:
+    long_description_kwd=dict()
+
 setup(
     name='smpplib',
     version='2.1.0',
     url='https://github.com/podshumok/python-smpplib',
     description='SMPP library for python',
-    long_description=io.open('README.md', 'rt', encoding='utf-8').read(),
-    long_description_content_type='text/markdown',
     packages=find_packages(),
     install_requires=['six'],
-    tests_require=['pytest', 'mock', 'tox'],
+    extras_require=dict(
+        tests=('pytest', 'mock'),
+    ),
     zip_safe=True,
-    classifiers=[
+    classifiers=(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Telecommunications Industry',
         'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
@@ -30,5 +38,6 @@ setup(
         'Topic :: Communications',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Software Development :: Libraries',
-    ],
+    ),
+    **long_description_kwd
 )

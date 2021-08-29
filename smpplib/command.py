@@ -22,8 +22,6 @@
 import logging
 import struct
 
-import six
-
 from smpplib import consts, exceptions, pdu
 from smpplib.ptypes import flag, ostr
 
@@ -64,7 +62,7 @@ def get_optional_name(code):
     """Return optional_params name by given code. If code is unknown, raise
     UnkownCommandError exception"""
 
-    for key, value in six.iteritems(consts.OPTIONAL_PARAMS):
+    for key, value in consts.OPTIONAL_PARAMS.items():
         if value == code:
             return key
 
@@ -106,7 +104,7 @@ class Command(pdu.PDU):
 
     def _set_vars(self, **kwargs):
         """set attributes accordingly to kwargs"""
-        for key, value in six.iteritems(kwargs):
+        for key, value in kwargs.items():
             if not hasattr(self, key) or getattr(self, key) is None:
                 setattr(self, key, value)
 
@@ -179,7 +177,7 @@ class Command(pdu.PDU):
                 value = chr(0)
 
         setattr(self, field, field_value)
-        return six.b(value)
+        return value
 
     def _generate_ostring(self, field):
         """Generate octet string value (no null terminator)"""

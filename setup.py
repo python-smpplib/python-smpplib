@@ -16,7 +16,6 @@ setup(
     url='https://github.com/podshumok/python-smpplib',
     description='SMPP library for python',
     packages=find_packages(),
-    install_requires=['six'],
     extras_require=dict(
         tests=('pytest', 'mock'),
     ),

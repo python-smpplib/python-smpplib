@@ -1,5 +1,3 @@
-import six
-
 from smpplib import exceptions
 
 #
@@ -42,7 +40,7 @@ def get_command_name(code):
     If code is unknown, raise UnknownCommandError exception.
     """
 
-    for key, value in six.iteritems(commands):
+    for key, value in commands.items():
         if value == code:
             return key
 

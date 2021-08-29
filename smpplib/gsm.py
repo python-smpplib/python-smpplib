@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
 
-import six
-
 from smpplib import consts, exceptions
 
 
@@ -55,7 +53,7 @@ def gsm_encode(plaintext):
     """Performs default GSM 7-bit encoding. Beware it's vendor-specific and not recommended for use."""
     try:
         return b''.join(
-            six.int2byte(index) if index < 0x80 else b'\x1B' + six.int2byte(index - 0x80)
+            bytes((index, )) if index < 0x80 else b'\x1B' + bytes((index - 0x80, ))
             for index in map(GSM_CHARACTER_TABLE.index, plaintext)
         )
     except ValueError:
@@ -78,9 +76,9 @@ def make_parts_encoded(encoded_text, part_size):
         raise exceptions.MessageTooLong()
 
     uid = random.randint(0, 255)
-    header = b''.join((b'\x05\x00\x03', six.int2byte(uid), six.int2byte(len(chunks))))
+    header = b''.join((b'\x05\x00\x03', bytes((uid, )), bytes((len(chunks), ))))
 
-    return [b''.join((header, six.int2byte(i), chunk)) for i, chunk in enumerate(chunks, start=1)]
+    return [b''.join((header, bytes((i, )), chunk)) for i, chunk in enumerate(chunks, start=1)]
 
 
 def split_sequence(sequence, part_size):

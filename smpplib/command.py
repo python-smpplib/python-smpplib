@@ -156,7 +156,7 @@ class Command(pdu.PDU):
         """Generate integer value"""
 
         fmt = self._int_pack_format(field)
-        data = getattr(self, field)
+        data: int = getattr(self, field)
         if data:
             return struct.pack(">" + fmt, data)
         else:
@@ -165,19 +165,19 @@ class Command(pdu.PDU):
     def _generate_string(self, field: str) -> bytes:
         """Generate string value"""
 
-        field_value = getattr(self, field)
+        field_value: bytes = getattr(self, field)
 
         if hasattr(self.params[field], 'size'):
             size = self.params[field].size # type: ignore
-            value = field_value.ljust(size, chr(0))
+            value = field_value.ljust(size, consts.NULL_STRING)
         elif hasattr(self.params[field], 'max'):
             if len(field_value or '') >= self.params[field].max: # type: ignore
                 field_value = field_value[0:self.params[field].max - 1] # type: ignore
 
             if field_value:
-                value = field_value + chr(0)
+                value = field_value + consts.NULL_STRING
             else:
-                value = chr(0)
+                value = consts.NULL_STRING
         else:
             assert False, "Param must have either size or max."
 
@@ -187,16 +187,16 @@ class Command(pdu.PDU):
     def _generate_ostring(self, field: str) -> Optional[bytes]:
         """Generate octet string value (no null terminator)"""
 
-        value = getattr(self, field)
+        value: bytes = getattr(self, field)
         if value:
             return value
         else:
-            return None  # chr(0)
+            return None  # consts.NULL_STRING
 
     def _generate_int_tlv(self, field: str) -> Optional[bytes]:
         """Generate integer value"""
         fmt = self._int_pack_format(field)
-        data = getattr(self, field)
+        data: int = getattr(self, field)
         field_code = get_optional_code(field)
         field_length = self.params[field].size # type: ignore
         value = None
@@ -207,23 +207,24 @@ class Command(pdu.PDU):
     def _generate_string_tlv(self, field: str) -> Optional[bytes]:
         """Generate string value"""
 
-        field_value = getattr(self, field)
+        field_value: bytes = getattr(self, field)
         field_code = get_optional_code(field)
+        value: Optional[bytes]
 
         if hasattr(self.params[field], 'size'):
             size = self.params[field].size # type: ignore
-            fvalue = field_value.ljust(size, chr(0))
+            fvalue = field_value.ljust(size, consts.NULL_STRING)
             value = struct.pack(">HH", field_code, size) + fvalue
         elif hasattr(self.params[field], 'max'):
             if len(field_value or '') > self.params[field].max: # type: ignore
                 field_value = field_value[0:self.params[field].max - 1] # type: ignore
 
             if field_value:
-                fvalue = field_value + chr(0)
+                fvalue = field_value + consts.NULL_STRING
                 field_length = len(fvalue)
-                value = struct.pack(">HH", field_code, field_length) + fvalue.encode()
+                value = struct.pack(">HH", field_code, field_length) + fvalue
             else:
-                value = None  # chr(0)
+                value = None  # consts.NULL_STRING
         else:
             assert False, "Param must have either size or max."
 
@@ -232,7 +233,7 @@ class Command(pdu.PDU):
     def _generate_ostring_tlv(self, field: str) -> Optional[bytes]:
         """Generate octet string value (no null terminator)"""
         try:
-            field_value = getattr(self, field)
+            field_value: bytes = getattr(self, field)
         except:
             return None
         field_code = get_optional_code(field)

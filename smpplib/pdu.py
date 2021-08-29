@@ -19,7 +19,7 @@
 """PDU module"""
 
 import struct
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from smpplib import command_codes, consts
 from smpplib.consts import SMPP_ESME_ROK
@@ -40,6 +40,9 @@ class default_client(object):
     """Dummy client"""
     sequence = 0
 
+    def next_sequence(self):
+        raise NotImplementedError()
+
 
 class PDU(object):
     """PDU class"""
@@ -48,14 +51,12 @@ class PDU(object):
     command = None
     status = None
     _sequence = None
-    _client: "Client"
+    _client: Union["Client", default_client]
 
     def __init__(self, client=default_client(), **kwargs):
         """Singleton dummy client will be used if omitted"""
         if client is None:
-            # TODO: this is probably a bug, default client doesn't have the
-            # right methods.
-            self._client = default_client() # type:ignore
+            self._client = default_client()
         else:
             self._client = client
 

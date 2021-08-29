@@ -19,10 +19,10 @@ def test_parse_deliver_sm():
     assert pdu.source_addr_npi == consts.SMPP_NPI_ISDN
     assert pdu.source_addr == b'31600000000'
     assert pdu.destination_addr == b'XXX YYYY'
-    assert pdu.receipted_message_id == b'1d305b4c'
-    assert pdu.source_network_type == consts.SMPP_NETWORK_TYPE_GSM
-    assert pdu.message_state == consts.SMPP_MESSAGE_STATE_DELIVERED
-    assert pdu.user_message_reference is None
+    assert pdu.receipted_message_id == b'1d305b4c' # type: ignore
+    assert pdu.source_network_type == consts.SMPP_NETWORK_TYPE_GSM # type: ignore
+    assert pdu.message_state == consts.SMPP_MESSAGE_STATE_DELIVERED # type: ignore
+    assert pdu.user_message_reference is None # type: ignore
 
 
 def test_unrecognised_optional_parameters():

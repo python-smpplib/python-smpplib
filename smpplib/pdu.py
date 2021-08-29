@@ -19,9 +19,13 @@
 """PDU module"""
 
 import struct
+from typing import TYPE_CHECKING
 
 from smpplib import command_codes, consts
 from smpplib.consts import SMPP_ESME_ROK
+
+if TYPE_CHECKING:
+    from smpplib.client import Client
 
 
 def extract_command(pdu):
@@ -44,11 +48,14 @@ class PDU(object):
     command = None
     status = None
     _sequence = None
+    _client: "Client"
 
     def __init__(self, client=default_client(), **kwargs):
         """Singleton dummy client will be used if omitted"""
         if client is None:
-            self._client = default_client()
+            # TODO: this is probably a bug, default client doesn't have the
+            # right methods.
+            self._client = default_client() # type:ignore
         else:
             self._client = client
 
@@ -99,6 +106,12 @@ class PDU(object):
             return "Description for status 0x%x not found!" % status
 
         return desc
+
+    def parse_params(self, data):
+        raise NotImplementedError()
+
+    def generate_params(self):
+        raise NotImplementedError()
 
     def parse(self, data):
         """Parse raw PDU"""

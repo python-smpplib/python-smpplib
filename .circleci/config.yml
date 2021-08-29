@@ -29,10 +29,15 @@ jobs:
               . venv/bin/activate
               pip install -e .[tests]
       - run:
+          name: Typecheck
+          command: |
+            . venv/bin/activate
+            venv/bin/mypy -p smpplib
+      - run:
           name: Run tests
           command: |
             . venv/bin/activate
-            pytest -v
+            pytest -v smpplib
   test-3.8:
     <<: *test-template
     docker:

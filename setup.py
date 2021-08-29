@@ -17,7 +17,7 @@ setup(
     description='SMPP library for python',
     packages=find_packages(),
     extras_require=dict(
-        tests=('pytest', 'mock'),
+        tests=('pytest', 'mock', 'mypy', 'types-mock'),
     ),
     zip_safe=True,
     classifiers=(

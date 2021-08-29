@@ -24,7 +24,7 @@ def test_client_error_pdu_default():
     client = Client("localhost", 5679)
     error_pdu = make_pdu("submit_sm_resp")
     error_pdu.status = consts.SMPP_ESME_RINVMSGLEN
-    client.read_pdu = Mock(return_value=error_pdu)
+    client.read_pdu = Mock(return_value=error_pdu) # type: ignore
 
     with pytest.raises(exceptions.PDUError) as exec_info:
         client.read_once()
@@ -39,7 +39,7 @@ def test_client_error_pdu_custom_handler():
     client = Client("localhost", 5679)
     error_pdu = make_pdu("submit_sm_resp")
     error_pdu.status = consts.SMPP_ESME_RINVMSGLEN
-    client.read_pdu = Mock(return_value=error_pdu)
+    client.read_pdu = Mock(return_value=error_pdu) # type: ignore
 
     mock_error_pdu_handler = Mock()
     client.set_error_pdu_handler(mock_error_pdu_handler)

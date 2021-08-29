@@ -24,6 +24,7 @@ import select
 import socket
 import struct
 import warnings
+from typing import Optional
 
 from smpplib import consts, exceptions, smpp
 
@@ -54,11 +55,11 @@ class Client(object):
     state = consts.SMPP_CLIENT_STATE_CLOSED
 
     host = None
-    port = None
+    port: int
     vendor = None
-    _socket = None
+    _socket: Optional[socket.socket] = None
     _ssl_context = None
-    sequence_generator = None
+    sequence_generator: SimpleSequenceGenerator
 
     def __init__(
         self,
@@ -216,6 +217,7 @@ class Client(object):
 
         while sent < len(generated):
             try:
+                assert self._socket is not None
                 sent_last = self._socket.send(generated[sent:])
             except socket.error as e:
                 self.logger.warning(e)
@@ -232,6 +234,7 @@ class Client(object):
         self.logger.debug('Waiting for PDU...')
 
         try:
+            assert self._socket is not None
             raw_len = self._socket.recv(4)
         except socket.timeout:
             raise
@@ -249,6 +252,7 @@ class Client(object):
 
         raw_pdu = raw_len
         while len(raw_pdu) < length:
+            assert self._socket is not None
             raw_pdu += self._socket.recv(length - len(raw_pdu))
 
         self.logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
@@ -294,19 +298,19 @@ class Client(object):
 
     def set_message_received_handler(self, func):
         """Set new function to handle message receive event"""
-        self.message_received_handler = func
+        self.message_received_handler = func # type: ignore
 
     def set_message_sent_handler(self, func):
         """Set new function to handle message sent event"""
-        self.message_sent_handler = func
+        self.message_sent_handler = func # type: ignore
         
     def set_query_resp_handler(self, func):
         """Set new function to handle query resp event"""
-        self.query_resp_handler = func
+        self.query_resp_handler = func # type: ignore
 
     def set_error_pdu_handler(self, func):
         """Set new function to handle PDUs with an error status"""
-        self.error_pdu_handler = func
+        self.error_pdu_handler = func # type: ignore
 
     def message_received_handler(self, pdu, **kwargs):
         """Custom handler to process received message. May be overridden"""

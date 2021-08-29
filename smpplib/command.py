@@ -21,6 +21,7 @@
 
 import logging
 import struct
+from typing import Dict, Tuple, Any, Optional, Callable
 
 from smpplib import consts, exceptions, pdu
 from smpplib.ptypes import flag, ostr
@@ -86,7 +87,8 @@ def unpack_short(data, pos):
 class Command(pdu.PDU):
     """SMPP PDU Command class"""
 
-    params = {}
+    params: Dict[str, "Param"] = {}
+    params_order: Tuple[str, ...]
 
     def __init__(self, command, need_sequence=True, allow_unknown_opt_params=False, **kwargs):
         super(Command, self).__init__(**kwargs)
@@ -111,8 +113,8 @@ class Command(pdu.PDU):
     def generate_params(self):
         """Generate binary data from the object"""
 
-        if hasattr(self, 'prep') and callable(self.prep):
-            self.prep()
+        if hasattr(self, 'prep') and callable(self.prep): # type: ignore
+            self.prep() # type: ignore
 
         body = consts.EMPTY_STRING
 
@@ -165,11 +167,11 @@ class Command(pdu.PDU):
         field_value = getattr(self, field)
 
         if hasattr(self.params[field], 'size'):
-            size = self.params[field].size
+            size = self.params[field].size # type: ignore
             value = field_value.ljust(size, chr(0))
         elif hasattr(self.params[field], 'max'):
-            if len(field_value or '') >= self.params[field].max:
-                field_value = field_value[0:self.params[field].max - 1]
+            if len(field_value or '') >= self.params[field].max: # type: ignore
+                field_value = field_value[0:self.params[field].max - 1] # type: ignore
 
             if field_value:
                 value = field_value + chr(0)
@@ -193,7 +195,7 @@ class Command(pdu.PDU):
         fmt = self._int_pack_format(field)
         data = getattr(self, field)
         field_code = get_optional_code(field)
-        field_length = self.params[field].size
+        field_length = self.params[field].size # type: ignore
         value = None
         if data is not None:
             value = struct.pack(">HH" + fmt, field_code, field_length, data)
@@ -206,12 +208,12 @@ class Command(pdu.PDU):
         field_code = get_optional_code(field)
 
         if hasattr(self.params[field], 'size'):
-            size = self.params[field].size
+            size = self.params[field].size # type: ignore
             fvalue = field_value.ljust(size, chr(0))
             value = struct.pack(">HH", field_code, size) + fvalue
         elif hasattr(self.params[field], 'max'):
-            if len(field_value or '') > self.params[field].max:
-                field_value = field_value[0:self.params[field].max - 1]
+            if len(field_value or '') > self.params[field].max: # type: ignore
+                field_value = field_value[0:self.params[field].max - 1] # type: ignore
 
             if field_value:
                 fvalue = field_value + chr(0)
@@ -237,7 +239,7 @@ class Command(pdu.PDU):
 
     def _int_pack_format(self, field):
         """Return format type"""
-        return consts.INT_PACK_FORMATS[self.params[field].size]
+        return consts.INT_PACK_FORMATS[self.params[field].size] # type: ignore
 
     def _parse_int(self, field, data, pos):
         """
@@ -245,7 +247,7 @@ class Command(pdu.PDU):
         Return (data, pos) tuple.
         """
 
-        size = self.params[field].size
+        size = self.params[field].size # type: ignore
         fmt = self._int_pack_format(field)
         field_value, = struct.unpack(">" + fmt, data[pos:pos + size])
         setattr(self, field, field_value)
@@ -277,7 +279,7 @@ class Command(pdu.PDU):
         """
 
         if length is None:
-            length_field = self.params[field].len_field
+            length_field = self.params[field].len_field # type: ignore
             length = int(getattr(self, length_field))
 
         setattr(self, field, data[pos:pos + length])
@@ -351,7 +353,7 @@ class Command(pdu.PDU):
     def field_is_optional(self, field):
         """Return True if field is optional, False otherwise"""
 
-        if hasattr(self, 'mandatory_fields') and field in self.mandatory_fields:
+        if hasattr(self, 'mandatory_fields') and field in self.mandatory_fields: # type: ignore
             return False
         elif field in consts.OPTIONAL_PARAMS:
             return True
@@ -565,7 +567,8 @@ class DataSMResp(Command):
 class GenericNAck(Command):
     """General Negative Acknowledgement class"""
 
-    _defs = []
+    # TODO: seems unused
+    _defs: Any = []
 
     def __init__(self, command, **kwargs):
         super(GenericNAck, self).__init__(command, need_sequence=False, **kwargs)
@@ -695,7 +698,7 @@ class SubmitSM(Command):
         'ussd_service_op': Param(type=int, size=1),
     }
 
-    params_order = (
+    params_order: Tuple[str, ...] = (
         'service_type', 'source_addr_ton', 'source_addr_npi',
         'source_addr', 'dest_addr_ton', 'dest_addr_npi',
         'destination_addr', 'esm_class', 'protocol_id', 'priority_flag',
@@ -870,6 +873,7 @@ class QuerySM(Command):
 class QuerySMResp(Command):
     """Response command for query_sm"""
 
+    # TODO: this seems like a bug, misssing a , to make it a tuple
     mandatory_fields = ('message_state')
 
     params = {
@@ -892,7 +896,7 @@ class QuerySMResp(Command):
 class Unbind(Command):
     """Unbind command"""
 
-    params = {}
+    params: Dict[str, Param] = {}
     params_order = ()
 
     def __init__(self, command, **kwargs):
@@ -902,7 +906,7 @@ class Unbind(Command):
 class UnbindResp(Command):
     """Unbind response command"""
 
-    params = {}
+    params: Dict[str, Param] = {}
     params_order = ()
 
     def __init__(self, command, **kwargs):
@@ -911,7 +915,7 @@ class UnbindResp(Command):
 
 class EnquireLink(Command):
     """Enquire link command"""
-    params = {}
+    params: Dict[str, Param] = {}
     params_order = ()
 
     def __init__(self, command, **kwargs):
@@ -920,7 +924,7 @@ class EnquireLink(Command):
 
 class EnquireLinkResp(Command):
     """Enquire link command response"""
-    params = {}
+    params: Dict[str, Param] = {}
     params_order = ()
 
     def __init__(self, command, **kwargs):

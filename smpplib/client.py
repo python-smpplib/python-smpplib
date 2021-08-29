@@ -24,8 +24,11 @@ import select
 import socket
 import struct
 import warnings
+from typing import Optional, Callable
+from ssl import SSLContext
 
-from smpplib import consts, exceptions, smpp
+from smpplib import consts, exceptions, smpp, pdu
+from typing import Any, Dict, NoReturn, List
 
 
 class SimpleSequenceGenerator(object):
@@ -33,14 +36,14 @@ class SimpleSequenceGenerator(object):
     MIN_SEQUENCE = 0x00000001
     MAX_SEQUENCE = 0x7FFFFFFF
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._sequence = self.MIN_SEQUENCE
 
     @property
-    def sequence(self):
+    def sequence(self) -> int:
         return self._sequence
 
-    def next_sequence(self):
+    def next_sequence(self) -> int:
         if self._sequence == self.MAX_SEQUENCE:
             self._sequence = self.MIN_SEQUENCE
         else:
@@ -53,23 +56,23 @@ class Client(object):
 
     state = consts.SMPP_CLIENT_STATE_CLOSED
 
-    host = None
-    port = None
+    host: str
+    port: int
     vendor = None
-    _socket = None
+    _socket: Optional[socket.socket] = None
     _ssl_context = None
-    sequence_generator = None
+    sequence_generator: Any
 
     def __init__(
         self,
-        host,
-        port,
-        timeout=5,
-        sequence_generator=None,
-        logger_name=None,
-        ssl_context=None,
-        allow_unknown_opt_params=None,
-    ):
+        host: str,
+        port: int,
+        timeout: float =5,
+        sequence_generator: Optional[Any]=None,
+        logger_name: Optional[str]=None,
+        ssl_context: Optional[SSLContext]=None,
+        allow_unknown_opt_params: Optional[bool]=None,
+    ) -> None:
         self.host = host
         self.port = int(port)
         self._ssl_context = ssl_context
@@ -94,10 +97,10 @@ class Client(object):
 
         self._socket = self._create_socket()
 
-    def __enter__(self):
+    def __enter__(self) -> "Client":
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         if self._socket is not None:
             try:
                 self.unbind()
@@ -108,18 +111,18 @@ class Client(object):
                     self.logger.warning('%s. Ignored', e)
             self.disconnect()
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self._socket is not None:
             self.logger.warning('%s was not closed', self)
 
     @property
-    def sequence(self):
+    def sequence(self) -> int:
         return self.sequence_generator.sequence
 
-    def next_sequence(self):
+    def next_sequence(self) -> int:
         return self.sequence_generator.next_sequence()
 
-    def _create_socket(self):
+    def _create_socket(self) -> socket.socket:
         raw_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         raw_socket.settimeout(self.timeout)
 
@@ -128,7 +131,7 @@ class Client(object):
 
         return self._ssl_context.wrap_socket(raw_socket)
 
-    def connect(self):
+    def connect(self) -> None:
         """Connect to SMSC"""
 
         self.logger.info('Connecting to %s:%s...', self.host, self.port)
@@ -141,7 +144,7 @@ class Client(object):
         except socket.error:
             raise exceptions.ConnectionError("Connection refused")
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from the SMSC"""
         self.logger.info('Disconnecting...')
 
@@ -152,7 +155,7 @@ class Client(object):
             self._socket = None
         self.state = consts.SMPP_CLIENT_STATE_CLOSED
 
-    def _bind(self, command_name, **kwargs):
+    def _bind(self, command_name: str, **kwargs: Any) -> Any:
         """Send bind_transmitter command to the SMSC"""
 
         if command_name in ('bind_receiver', 'bind_transceiver'):
@@ -174,19 +177,19 @@ class Client(object):
             )
         return resp
 
-    def bind_transmitter(self, **kwargs):
+    def bind_transmitter(self, **kwargs: Any) -> Any:
         """Bind as a transmitter"""
         return self._bind('bind_transmitter', **kwargs)
 
-    def bind_receiver(self, **kwargs):
+    def bind_receiver(self, **kwargs: Any) -> Any:
         """Bind as a receiver"""
         return self._bind('bind_receiver', **kwargs)
 
-    def bind_transceiver(self, **kwargs):
+    def bind_transceiver(self, **kwargs: Any) -> Any:
         """Bind as a transmitter and receiver at once"""
         return self._bind('bind_transceiver', **kwargs)
 
-    def unbind(self):
+    def unbind(self) -> Any:
         """Unbind from the SMSC"""
 
         p = smpp.make_pdu('unbind', client=self)
@@ -197,7 +200,7 @@ class Client(object):
         except socket.timeout:
             raise exceptions.ConnectionError()
 
-    def send_pdu(self, p):
+    def send_pdu(self, p: pdu.PDU) -> bool:
         """Send PDU to the SMSC"""
 
         if self.state not in consts.COMMAND_STATES[p.command]:
@@ -216,6 +219,7 @@ class Client(object):
 
         while sent < len(generated):
             try:
+                assert self._socket is not None
                 sent_last = self._socket.send(generated[sent:])
             except socket.error as e:
                 self.logger.warning(e)
@@ -226,12 +230,13 @@ class Client(object):
 
         return True
 
-    def read_pdu(self):
+    def read_pdu(self) -> Any:
         """Read PDU from the SMSC"""
 
         self.logger.debug('Waiting for PDU...')
 
         try:
+            assert self._socket is not None
             raw_len = self._socket.recv(4)
         except socket.timeout:
             raise
@@ -249,6 +254,7 @@ class Client(object):
 
         raw_pdu = raw_len
         while len(raw_pdu) < length:
+            assert self._socket is not None
             raw_pdu += self._socket.recv(length - len(raw_pdu))
 
         self.logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
@@ -269,11 +275,11 @@ class Client(object):
 
         return pdu
 
-    def accept(self, obj):
+    def accept(self, obj: Any) -> NoReturn:
         """Accept an object"""
         raise NotImplementedError('not implemented')
 
-    def _message_received(self, pdu):
+    def _message_received(self, pdu: pdu.PDU) -> None:
         """Handler for received message event"""
         status = self.message_received_handler(pdu=pdu)
         if status is None:
@@ -282,56 +288,58 @@ class Client(object):
         dsmr.sequence = pdu.sequence
         self.send_pdu(dsmr)
 
-    def _enquire_link_received(self, pdu):
+    def _enquire_link_received(self, pdu: pdu.PDU) -> None:
         """Response to enquire_link"""
         ler = smpp.make_pdu('enquire_link_resp', client=self)
         ler.sequence = pdu.sequence
         self.send_pdu(ler)
 
-    def _alert_notification(self, pdu):
+    def _alert_notification(self, pdu: pdu.PDU) -> None:
         """Handler for alert notification event"""
         self.message_received_handler(pdu=pdu)
 
-    def set_message_received_handler(self, func):
+    def set_message_received_handler(self, func: Callable[..., Optional[int]]) -> None:
         """Set new function to handle message receive event"""
-        self.message_received_handler = func
+        self.message_received_handler = func # type: ignore
 
-    def set_message_sent_handler(self, func):
+    def set_message_sent_handler(self, func: Callable[..., None]) -> None:
         """Set new function to handle message sent event"""
-        self.message_sent_handler = func
+        self.message_sent_handler = func # type: ignore
         
-    def set_query_resp_handler(self, func):
+    def set_query_resp_handler(self, func: Callable[..., None]) -> None:
         """Set new function to handle query resp event"""
-        self.query_resp_handler = func
+        self.query_resp_handler = func # type: ignore
 
-    def set_error_pdu_handler(self, func):
+    def set_error_pdu_handler(self, func: Callable[..., None]) -> None:
         """Set new function to handle PDUs with an error status"""
-        self.error_pdu_handler = func
+        self.error_pdu_handler = func # type: ignore
 
-    def message_received_handler(self, pdu, **kwargs):
+    def message_received_handler(self, pdu: pdu.PDU, **kwargs: Any) -> Optional[int]:
         """Custom handler to process received message. May be overridden"""
         self.logger.warning('Message received handler (Override me)')
+        return None
 
-    def message_sent_handler(self, pdu, **kwargs):
+    def message_sent_handler(self, pdu: pdu.PDU, **kwargs: Any) -> None:
         """
         Called when SMPP server accept message (SUBMIT_SM_RESP).
         May be overridden
         """
         self.logger.warning('Message sent handler (Override me)')
 
-    def query_resp_handler(self, pdu, **kwargs):
+    def query_resp_handler(self, pdu: pdu.PDU, **kwargs: Any) -> None:
         """Custom handler to process response to queries. May be overridden"""
         self.logger.warning('Query resp handler (Override me)')
 
-    def error_pdu_handler(self, pdu):
+    def error_pdu_handler(self, pdu: pdu.PDU) -> NoReturn:
         raise exceptions.PDUError('({}) {}: {}'.format(
             pdu.status,
             pdu.command,
+            'Unknown status' if pdu.status is None else
             consts.DESCRIPTIONS.get(pdu.status, 'Unknown status')),
-            int(pdu.status),
+            pdu.status,
         )
 
-    def read_once(self, ignore_error_codes=None, auto_send_enquire_link=True):
+    def read_once(self, ignore_error_codes: Optional[List[int]]=None, auto_send_enquire_link: bool=True) -> None:
         """Read a PDU and act"""
 
         if ignore_error_codes is not None:
@@ -378,7 +386,7 @@ class Client(object):
             else:
                 raise
 
-    def poll(self, ignore_error_codes=None, auto_send_enquire_link=True):
+    def poll(self, ignore_error_codes: Optional[List[int]]=None, auto_send_enquire_link: bool=True) -> None:
         """Act on available PDUs and return"""
         while True:
             readable, _writable, _exceptional = select.select([self._socket], [], [], 0)
@@ -386,12 +394,12 @@ class Client(object):
                 break
             self.read_once(ignore_error_codes, auto_send_enquire_link)
 
-    def listen(self, ignore_error_codes=None, auto_send_enquire_link=True):
+    def listen(self, ignore_error_codes: Optional[List[int]]=None, auto_send_enquire_link: bool=True) -> None:
         """Listen for PDUs and act"""
         while True:
             self.read_once(ignore_error_codes, auto_send_enquire_link)
 
-    def send_message(self, **kwargs):
+    def send_message(self, **kwargs: Any) -> Any:
         """Send message
 
         Required Arguments:
@@ -406,7 +414,7 @@ class Client(object):
         self.send_pdu(ssm)
         return ssm
 
-    def query_message(self, **kwargs):
+    def query_message(self, **kwargs: Any) -> Any:
         """Query message state
 
         Required Arguments:

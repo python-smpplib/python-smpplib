@@ -19,9 +19,10 @@
 """SMPP module"""
 
 from smpplib import command, pdu
+from typing import Any
 
 
-def make_pdu(command_name, **kwargs):
+def make_pdu(command_name: str, **kwargs: Any) -> pdu.PDU:
     """Return PDU instance"""
 
     f = command.factory(command_name, **kwargs)
@@ -29,7 +30,7 @@ def make_pdu(command_name, **kwargs):
     return f
 
 
-def parse_pdu(data, **kwargs):
+def parse_pdu(data: bytes, **kwargs: Any) -> pdu.PDU:
     """Parse binary PDU"""
 
     command = pdu.extract_command(data)

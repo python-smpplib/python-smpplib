@@ -21,16 +21,16 @@
 
 import logging
 import struct
-
-import six
+from typing import Dict, Tuple, Any, Optional, Callable
 
 from smpplib import consts, exceptions, pdu
 from smpplib.ptypes import flag, ostr
+from typing import NoReturn, TypeVar
 
 logger = logging.getLogger('smpplib.command')
 
 
-def factory(command_name, **kwargs):
+def factory(command_name: str, **kwargs: Any) -> pdu.PDU:
     """Return instance of a specific command class"""
 
     try:
@@ -60,18 +60,18 @@ def factory(command_name, **kwargs):
         raise exceptions.UnknownCommandError('Command "%s" is not supported' % command_name)
 
 
-def get_optional_name(code):
+def get_optional_name(code: int) -> str:
     """Return optional_params name by given code. If code is unknown, raise
     UnkownCommandError exception"""
 
-    for key, value in six.iteritems(consts.OPTIONAL_PARAMS):
+    for key, value in consts.OPTIONAL_PARAMS.items():
         if value == code:
             return key
 
     raise exceptions.UnknownCommandError('Unknown SMPP command code "0x%x"' % code)
 
 
-def get_optional_code(name):
+def get_optional_code(name: str) -> int:
     """Return optional_params code by given command name. If name is unknown,
     raise UnknownCommandError exception"""
 
@@ -81,16 +81,17 @@ def get_optional_code(name):
         raise exceptions.UnknownCommandError('Unknown SMPP command name "%s"' % name)
 
 
-def unpack_short(data, pos):
+def unpack_short(data: bytes, pos: int) -> Tuple[int, int]:
     return struct.unpack('>H', data[pos:pos+2])[0], pos + 2
 
 
 class Command(pdu.PDU):
     """SMPP PDU Command class"""
 
-    params = {}
+    params: Dict[str, "Param"] = {}
+    params_order: Tuple[str, ...]
 
-    def __init__(self, command, need_sequence=True, allow_unknown_opt_params=False, **kwargs):
+    def __init__(self, command: str, need_sequence: bool=True, allow_unknown_opt_params: bool=False, **kwargs: Any) -> None:
         super(Command, self).__init__(**kwargs)
 
         self.allow_unknown_opt_params = allow_unknown_opt_params
@@ -104,17 +105,17 @@ class Command(pdu.PDU):
 
         self._set_vars(**kwargs)
 
-    def _set_vars(self, **kwargs):
+    def _set_vars(self, **kwargs: Any) -> None:
         """set attributes accordingly to kwargs"""
-        for key, value in six.iteritems(kwargs):
+        for key, value in kwargs.items():
             if not hasattr(self, key) or getattr(self, key) is None:
                 setattr(self, key, value)
 
-    def generate_params(self):
+    def generate_params(self) -> bytes:
         """Generate binary data from the object"""
 
-        if hasattr(self, 'prep') and callable(self.prep):
-            self.prep()
+        if hasattr(self, 'prep') and callable(self.prep): # type: ignore
+            self.prep() # type: ignore
 
         body = consts.EMPTY_STRING
 
@@ -146,87 +147,93 @@ class Command(pdu.PDU):
                         body += value
         return body
 
-    def _generate_opt_header(self, field):
+    def _generate_opt_header(self, field: str) -> NoReturn:
         """Generate a header for an optional parameter"""
 
         raise NotImplementedError('Vendors not supported')
 
-    def _generate_int(self, field):
+    def _generate_int(self, field: str) -> bytes:
         """Generate integer value"""
 
         fmt = self._int_pack_format(field)
-        data = getattr(self, field)
+        data: int = getattr(self, field)
         if data:
             return struct.pack(">" + fmt, data)
         else:
             return consts.NULL_STRING
 
-    def _generate_string(self, field):
+    def _generate_string(self, field: str) -> bytes:
         """Generate string value"""
 
-        field_value = getattr(self, field)
+        field_value: bytes = getattr(self, field)
 
         if hasattr(self.params[field], 'size'):
-            size = self.params[field].size
-            value = field_value.ljust(size, chr(0))
+            size = self.params[field].size # type: ignore
+            value = field_value.ljust(size, consts.NULL_STRING)
         elif hasattr(self.params[field], 'max'):
-            if len(field_value or '') >= self.params[field].max:
-                field_value = field_value[0:self.params[field].max - 1]
+            if len(field_value or '') >= self.params[field].max: # type: ignore
+                field_value = field_value[0:self.params[field].max - 1] # type: ignore
 
             if field_value:
-                value = field_value + chr(0)
+                value = field_value + consts.NULL_STRING
             else:
-                value = chr(0)
+                value = consts.NULL_STRING
+        else:
+            assert False, "Param must have either size or max."
 
         setattr(self, field, field_value)
-        return six.b(value)
+        return value
 
-    def _generate_ostring(self, field):
+    def _generate_ostring(self, field: str) -> Optional[bytes]:
         """Generate octet string value (no null terminator)"""
 
-        value = getattr(self, field)
+        value: bytes = getattr(self, field)
         if value:
             return value
         else:
-            return None  # chr(0)
+            return None  # consts.NULL_STRING
 
-    def _generate_int_tlv(self, field):
+    def _generate_int_tlv(self, field: str) -> Optional[bytes]:
         """Generate integer value"""
         fmt = self._int_pack_format(field)
-        data = getattr(self, field)
+        data: int = getattr(self, field)
         field_code = get_optional_code(field)
-        field_length = self.params[field].size
+        field_length = self.params[field].size # type: ignore
         value = None
         if data is not None:
             value = struct.pack(">HH" + fmt, field_code, field_length, data)
         return value
 
-    def _generate_string_tlv(self, field):
+    def _generate_string_tlv(self, field: str) -> Optional[bytes]:
         """Generate string value"""
 
-        field_value = getattr(self, field)
+        field_value: bytes = getattr(self, field)
         field_code = get_optional_code(field)
+        value: Optional[bytes]
 
         if hasattr(self.params[field], 'size'):
-            size = self.params[field].size
-            fvalue = field_value.ljust(size, chr(0))
+            size = self.params[field].size # type: ignore
+            fvalue = field_value.ljust(size, consts.NULL_STRING)
             value = struct.pack(">HH", field_code, size) + fvalue
         elif hasattr(self.params[field], 'max'):
-            if len(field_value or '') > self.params[field].max:
-                field_value = field_value[0:self.params[field].max - 1]
+            if len(field_value or '') > self.params[field].max: # type: ignore
+                field_value = field_value[0:self.params[field].max - 1] # type: ignore
 
             if field_value:
-                fvalue = field_value + chr(0)
+                fvalue = field_value + consts.NULL_STRING
                 field_length = len(fvalue)
-                value = struct.pack(">HH", field_code, field_length) + fvalue.encode()
+                value = struct.pack(">HH", field_code, field_length) + fvalue
             else:
-                value = None  # chr(0)
+                value = None  # consts.NULL_STRING
+        else:
+            assert False, "Param must have either size or max."
+
         return value
 
-    def _generate_ostring_tlv(self, field):
+    def _generate_ostring_tlv(self, field: str) -> Optional[bytes]:
         """Generate octet string value (no null terminator)"""
         try:
-            field_value = getattr(self, field)
+            field_value: bytes = getattr(self, field)
         except:
             return None
         field_code = get_optional_code(field)
@@ -237,17 +244,17 @@ class Command(pdu.PDU):
             value = struct.pack(">HH", field_code, field_length) + field_value
         return value
 
-    def _int_pack_format(self, field):
+    def _int_pack_format(self, field: str) -> str:
         """Return format type"""
-        return consts.INT_PACK_FORMATS[self.params[field].size]
+        return consts.INT_PACK_FORMATS[self.params[field].size] # type: ignore
 
-    def _parse_int(self, field, data, pos):
+    def _parse_int(self, field: str, data: bytes, pos: int) -> Tuple[bytes, int]:
         """
         Parse fixed-length chunk from a PDU.
         Return (data, pos) tuple.
         """
 
-        size = self.params[field].size
+        size = self.params[field].size # type: ignore
         fmt = self._int_pack_format(field)
         field_value, = struct.unpack(">" + fmt, data[pos:pos + size])
         setattr(self, field, field_value)
@@ -255,7 +262,7 @@ class Command(pdu.PDU):
 
         return data, pos
 
-    def _parse_string(self, field, data, pos, length=None):
+    def _parse_string(self, field: str, data: bytes, pos: int, length: Optional[int]=None) -> Tuple[bytes, int]:
         """
         Parse variable-length string from a PDU.
         Return (data, pos) tuple.
@@ -272,14 +279,14 @@ class Command(pdu.PDU):
 
         return data, pos
 
-    def _parse_ostring(self, field, data, pos, length=None):
+    def _parse_ostring(self, field: str, data: bytes, pos: int, length: Optional[int]=None) -> Tuple[bytes, int]:
         """
         Parse an octet string from a PDU.
         Return (data, pos) tuple.
         """
 
         if length is None:
-            length_field = self.params[field].len_field
+            length_field = self.params[field].len_field # type: ignore
             length = int(getattr(self, length_field))
 
         setattr(self, field, data[pos:pos + length])
@@ -287,14 +294,14 @@ class Command(pdu.PDU):
 
         return data, pos
 
-    def is_fixed(self, field):
+    def is_fixed(self, field: str) -> bool:
         """Return True if field has fixed length, False otherwise"""
 
         if hasattr(self.params[field], 'size'):
             return True
         return False
 
-    def parse_params(self, data):
+    def parse_params(self, data: bytes) -> None:
         """Parse data into the object structure"""
 
         pos = 0
@@ -314,7 +321,7 @@ class Command(pdu.PDU):
         if pos < dlen:
             self.parse_optional_params(data[pos:])
 
-    def parse_optional_params(self, data):
+    def parse_optional_params(self, data: bytes) -> None:
         """Parse optional parameters.
 
         Optional parameters have the following format:
@@ -346,14 +353,14 @@ class Command(pdu.PDU):
             elif param.type is ostr:
                 data, pos = self._parse_ostring(field, data, pos, length)
 
-    def field_exists(self, field):
+    def field_exists(self, field: str) -> bool:
         """Return True if field exists, False otherwise"""
         return hasattr(self.params, field)
 
-    def field_is_optional(self, field):
+    def field_is_optional(self, field: str) -> bool:
         """Return True if field is optional, False otherwise"""
 
-        if hasattr(self, 'mandatory_fields') and field in self.mandatory_fields:
+        if hasattr(self, 'mandatory_fields') and field in self.mandatory_fields: # type: ignore
             return False
         elif field in consts.OPTIONAL_PARAMS:
             return True
@@ -363,11 +370,16 @@ class Command(pdu.PDU):
 
         return False
 
+    def __repr__(self) -> str:
+        args = ', '.join(p + ":" + str(getattr(self, p)) for p in self.params_order)
+        return f'<{self.command}   {args}>'
+
+
 
 class Param(object):
     """Command parameter info class"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         if 'type' not in kwargs:
             raise KeyError('Parameter Type not defined')
 
@@ -385,7 +397,7 @@ class Param(object):
             if param in kwargs:
                 setattr(self, param, kwargs[param])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Shows type of Param in console"""
         return ''.join(('<Param of ', str(self.type), '>'))
 
@@ -409,7 +421,7 @@ class BindTransmitter(Command):
         'interface_version', 'addr_ton', 'addr_npi', 'address_range',
     )
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(BindTransmitter, self).__init__(command, need_sequence=False, **kwargs)
 
         self._set_vars(**(dict.fromkeys(self.params)))
@@ -418,13 +430,13 @@ class BindTransmitter(Command):
 
 class BindReceiver(BindTransmitter):
     """Bind as a receiver command"""
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(BindReceiver, self).__init__(command, **kwargs)
 
 
 class BindTransceiver(BindTransmitter):
     """Bind as receiver and transmitter command"""
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(BindTransceiver, self).__init__(command, **kwargs)
 
 
@@ -438,7 +450,7 @@ class BindTransmitterResp(Command):
 
     params_order = ('system_id', 'sc_interface_version')
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(BindTransmitterResp, self).__init__(command, need_sequence=False,
                                                                     **kwargs)
 
@@ -447,13 +459,13 @@ class BindTransmitterResp(Command):
 
 class BindReceiverResp(BindTransmitterResp):
     """Response for bind as a reciever command"""
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(BindReceiverResp, self).__init__(command, **kwargs)
 
 
 class BindTransceiverResp(BindTransmitterResp):
     """Response for bind as a transceiver command"""
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(BindTransceiverResp, self).__init__(command, **kwargs)
 
 
@@ -533,7 +545,7 @@ class DataSM(Command):
         'its_session_info',
     )
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(DataSM, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -559,7 +571,7 @@ class DataSMResp(Command):
         'dpf_result',
     )
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(DataSMResp, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -567,9 +579,10 @@ class DataSMResp(Command):
 class GenericNAck(Command):
     """General Negative Acknowledgement class"""
 
-    _defs = []
+    # TODO: seems unused
+    _defs: Any = []
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(GenericNAck, self).__init__(command, need_sequence=False, **kwargs)
 
 
@@ -697,7 +710,7 @@ class SubmitSM(Command):
         'ussd_service_op': Param(type=int, size=1),
     }
 
-    params_order = (
+    params_order: Tuple[str, ...] = (
         'service_type', 'source_addr_ton', 'source_addr_npi',
         'source_addr', 'dest_addr_ton', 'dest_addr_npi',
         'destination_addr', 'esm_class', 'protocol_id', 'priority_flag',
@@ -718,11 +731,11 @@ class SubmitSM(Command):
         'ussd_service_op',
     )
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(SubmitSM, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
-    def prep(self):
+    def prep(self) -> None:
         """Prepare to generate binary data"""
 
         if self.short_message:
@@ -742,7 +755,7 @@ class SubmitSMResp(Command):
 
     params_order = ('message_id',)
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(SubmitSMResp, self).__init__(command, need_sequence=False, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -814,7 +827,7 @@ class DeliverSM(SubmitSM):
         'source_network_type', 'dest_network_type', 'more_messages_to_send',
     )
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(DeliverSM, self).__init__(command, need_sequence=False, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -823,7 +836,7 @@ class DeliverSMResp(SubmitSMResp):
     """deliver_sm_response response class, same as submit_sm"""
     message_id = None
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(DeliverSMResp, self).__init__(command, **kwargs)
 
 class QuerySM(Command):
@@ -858,11 +871,11 @@ class QuerySM(Command):
         'source_addr',
     )
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(QuerySM, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
-    def prep(self):
+    def prep(self) -> None:
         """Prepare to generate binary data"""
 
         if not self.message_id:
@@ -872,6 +885,7 @@ class QuerySM(Command):
 class QuerySMResp(Command):
     """Response command for query_sm"""
 
+    # TODO: this seems like a bug, misssing a , to make it a tuple
     mandatory_fields = ('message_state')
 
     params = {
@@ -886,7 +900,7 @@ class QuerySMResp(Command):
         'error_code',
     )
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(QuerySMResp, self).__init__(command, need_sequence=False, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
@@ -894,38 +908,38 @@ class QuerySMResp(Command):
 class Unbind(Command):
     """Unbind command"""
 
-    params = {}
+    params: Dict[str, Param] = {}
     params_order = ()
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(Unbind, self).__init__(command, need_sequence=False, **kwargs)
 
 
 class UnbindResp(Command):
     """Unbind response command"""
 
-    params = {}
+    params: Dict[str, Param] = {}
     params_order = ()
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(UnbindResp, self).__init__(command, need_sequence=False, **kwargs)
 
 
 class EnquireLink(Command):
     """Enquire link command"""
-    params = {}
+    params: Dict[str, Param] = {}
     params_order = ()
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(EnquireLink, self).__init__(command, need_sequence=False, **kwargs)
 
 
 class EnquireLinkResp(Command):
     """Enquire link command response"""
-    params = {}
+    params: Dict[str, Param] = {}
     params_order = ()
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(EnquireLinkResp, self).__init__(command, need_sequence=False, **kwargs)
 
 
@@ -973,6 +987,6 @@ class AlertNotification(Command):
         'ms_availability_status',
     )
 
-    def __init__(self, command, **kwargs):
+    def __init__(self, command: str, **kwargs: Any) -> None:
         super(AlertNotification, self).__init__(command, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))

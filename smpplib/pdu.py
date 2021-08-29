@@ -19,12 +19,17 @@
 """PDU module"""
 
 import struct
+from typing import TYPE_CHECKING, Union
 
 from smpplib import command_codes, consts
 from smpplib.consts import SMPP_ESME_ROK
+from typing import Any, Optional
+
+if TYPE_CHECKING:
+    from smpplib.client import Client
 
 
-def extract_command(pdu):
+def extract_command(pdu: Any) -> str:
     """Extract command from a PDU"""
 
     code = struct.unpack('>L', pdu[4:8])[0]
@@ -36,62 +41,67 @@ class default_client(object):
     """Dummy client"""
     sequence = 0
 
+    def next_sequence(self) -> int:
+        raise NotImplementedError()
+
 
 class PDU(object):
     """PDU class"""
 
     length = 0
-    command = None
-    status = None
-    _sequence = None
+    command: str
+    status: Optional[int] = None
+    _sequence: Optional[int]= None
+    _client: Union["Client", default_client]
 
-    def __init__(self, client=default_client(), **kwargs):
+    def __init__(self, client: Union["Client", default_client]=default_client(), **kwargs: Any) -> None:
         """Singleton dummy client will be used if omitted"""
         if client is None:
             self._client = default_client()
         else:
             self._client = client
 
-    def _get_sequence(self):
+    def _get_sequence(self) -> int:
         """Return global sequence number"""
         return self._sequence if self._sequence is not None else \
             self._client.sequence
 
-    def _set_sequence(self, sequence):
+    def _set_sequence(self, sequence: int) -> None:
         """Setter for sequence"""
         self._sequence = sequence
 
     sequence = property(_get_sequence, _set_sequence)
 
-    def _next_seq(self):
+    def _next_seq(self) -> int:
         """Return next sequence number"""
         return self._client.next_sequence()
 
-    def is_vendor(self):
+    def is_vendor(self) -> bool:
         """Return True if this is a vendor PDU, False otherwise"""
         return hasattr(self, 'vendor')
 
-    def is_request(self):
+    def is_request(self) -> bool:
         """Return True if this is a request PDU, False otherwise"""
         return not self.is_response()
 
-    def is_response(self):
+    def is_response(self) -> bool:
         """Return True if this is a response PDU, False otherwise"""
         if command_codes.get_command_code(self.command) & 0x80000000:
             return True
         return False
 
-    def is_error(self):
+    def is_error(self) -> bool:
         """Return True if this is an error response, False otherwise"""
         if self.status != SMPP_ESME_ROK:
             return True
         return False
 
-    def get_status_desc(self, status=None):
+    def get_status_desc(self, status: Optional[int]=None) -> str:
         """Return status description"""
 
         if status is None:
             status = self.status
+            assert status is not None
 
         try:
             desc = consts.DESCRIPTIONS[status]
@@ -100,7 +110,13 @@ class PDU(object):
 
         return desc
 
-    def parse(self, data):
+    def parse_params(self, data: bytes) -> None:
+        raise NotImplementedError()
+
+    def generate_params(self) -> bytes:
+        raise NotImplementedError()
+
+    def parse(self, data: bytes) -> None:
         """Parse raw PDU"""
 
         #
@@ -126,7 +142,7 @@ class PDU(object):
         if len(data) > 16:
             self.parse_params(data[16:])
 
-    def generate(self):
+    def generate(self) -> bytes:
         """Generate raw PDU"""
 
         body = self.generate_params()

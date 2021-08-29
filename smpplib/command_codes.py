@@ -1,5 +1,3 @@
-import six
-
 from smpplib import exceptions
 
 #
@@ -36,20 +34,20 @@ commands = {
 }
 
 
-def get_command_name(code):
+def get_command_name(code: int) -> str:
     """
     Return command name by given code.
     If code is unknown, raise UnknownCommandError exception.
     """
 
-    for key, value in six.iteritems(commands):
+    for key, value in commands.items():
         if value == code:
             return key
 
     raise exceptions.UnknownCommandError("Unknown SMPP command code '0x%x'" % code)
 
 
-def get_command_code(name):
+def get_command_code(name: str) -> int:
     """
     Return command code by given command name.
     If name is unknown, raise UnknownCommandError exception.

@@ -177,6 +177,8 @@ class Command(pdu.PDU):
                 value = field_value + chr(0)
             else:
                 value = chr(0)
+        else:
+            assert False, "Param must have either size or max."
 
         setattr(self, field, field_value)
         return value
@@ -221,6 +223,9 @@ class Command(pdu.PDU):
                 value = struct.pack(">HH", field_code, field_length) + fvalue.encode()
             else:
                 value = None  # chr(0)
+        else:
+            assert False, "Param must have either size or max."
+
         return value
 
     def _generate_ostring_tlv(self, field):

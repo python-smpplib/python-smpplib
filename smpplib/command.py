@@ -369,6 +369,11 @@ class Command(pdu.PDU):
 
         return False
 
+    def __repr__(self) -> str:
+        args = ', '.join(p + ":" + str(getattr(self, p)) for p in self.params_order)
+        return f'<{self.command}   {args}>'
+
+
 
 class Param(object):
     """Command parameter info class"""

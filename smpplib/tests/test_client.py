@@ -10,6 +10,9 @@ from smpplib import exceptions
 
 def test_client_construction_allow_unknown_opt_params_warning():
     with warnings.catch_warnings(record=True) as w:
+        # TODO: we should probably switch to assertWarns if we drop python 2
+        # support entirely
+        warnings.simplefilter("always")
         client = Client("localhost", 5679)
 
     assert len(w) == 1

@@ -34,7 +34,7 @@ commands = {
 }
 
 
-def get_command_name(code):
+def get_command_name(code: int) -> str:
     """
     Return command name by given code.
     If code is unknown, raise UnknownCommandError exception.
@@ -47,7 +47,7 @@ def get_command_name(code):
     raise exceptions.UnknownCommandError("Unknown SMPP command code '0x%x'" % code)
 
 
-def get_command_code(name):
+def get_command_code(name: str) -> int:
     """
     Return command code by given command name.
     If name is unknown, raise UnknownCommandError exception.

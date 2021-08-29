@@ -2,9 +2,10 @@
 import random
 
 from smpplib import consts, exceptions
+from typing import Any, List, Tuple, TypeVar, Union
 
 
-def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT, use_udhi=True):
+def make_parts(text: str, encoding: int=consts.SMPP_ENCODING_DEFAULT, use_udhi: bool=True) -> Tuple[Any, int, int]:
     """Returns tuple(parts, encoding, esm_class)"""
     try:
         # Try to encode with the user-defined encoding first.
@@ -49,7 +50,7 @@ GSM_CHARACTER_TABLE = (
 )
 
 
-def gsm_encode(plaintext):
+def gsm_encode(plaintext: str) -> bytes:
     """Performs default GSM 7-bit encoding. Beware it's vendor-specific and not recommended for use."""
     try:
         return b''.join(
@@ -69,7 +70,7 @@ ENCODINGS = {
 }
 
 
-def make_parts_encoded(encoded_text, part_size):
+def make_parts_encoded(encoded_text: bytes, part_size: int) -> List[bytes]:
     """Splits encoded text into SMS parts"""
     chunks = split_sequence(encoded_text, part_size)
     if len(chunks) > 255:
@@ -81,6 +82,6 @@ def make_parts_encoded(encoded_text, part_size):
     return [b''.join((header, bytes((i, )), chunk)) for i, chunk in enumerate(chunks, start=1)]
 
 
-def split_sequence(sequence, part_size):
+def split_sequence(sequence: bytes, part_size: int) -> List[bytes]:
     """Splits the sequence into equal parts"""
     return [sequence[i:i + part_size] for i in range(0, len(sequence), part_size)]

@@ -566,6 +566,7 @@ class DataSMResp(Command):
 
 class GenericNAck(Command):
     """General Negative Acknowledgement class"""
+
     params = {}
     params_order = ()
     _defs = []

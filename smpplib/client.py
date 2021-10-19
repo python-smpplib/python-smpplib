@@ -249,7 +249,16 @@ class Client(object):
 
         raw_pdu = raw_len
         while len(raw_pdu) < length:
-            raw_pdu += self._socket.recv(length - len(raw_pdu))
+            try:
+                raw_pdu_part = self._socket.recv(length - len(raw_pdu))
+            except socket.timeout:
+                raise
+            except socket.error as e:
+                self.logger.warning(e)
+                raise exceptions.ConnectionError()
+            if not raw_pdu:
+                raise exceptions.ConnectionError()
+            raw_pdu += raw_pdu_part
 
         self.logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
 

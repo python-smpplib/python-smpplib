@@ -18,7 +18,7 @@ setup(
     packages=find_packages(),
     install_requires=['six'],
     extras_require=dict(
-        tests=('pytest', 'mock'),
+        tests=('typing; python_version < "3.5"', 'pytest', 'mock'),
     ),
     zip_safe=True,
     classifiers=(

@@ -1,3 +1,13 @@
+### `2.2.0`
+
+* New: allow customizing how error PDUs are handled (@davidshepherd7)
+* New: ignoring unknown optional parameters (@davidshepherd7)
+* New: add the option to create TLS/SSL sockets (@davidshepherd7)
+* Fix: the max check should include the NULL terminator (Pedrum Mohageri)
+* Fix: not always setting the socket timeout (@davidshepherd7)
+* Fix: add mandatory parameters to GenericNack command (@stefanruijsenaars)
+* Fix: handle errors on PDU payload retrieval (@stefanruijsenaars)
+
 ### `2.1.0`
 
 * New: add option to not use UDHI when splitting long SMS

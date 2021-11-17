@@ -15,10 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-#
-#
-# Modified by Yusuf Kaka <yusufk at gmail>
-# Added support for Optional TLV's
 
 """SMPP client module"""
 
@@ -253,7 +249,16 @@ class Client(object):
 
         raw_pdu = raw_len
         while len(raw_pdu) < length:
-            raw_pdu += self._socket.recv(length - len(raw_pdu))
+            try:
+                raw_pdu_part = self._socket.recv(length - len(raw_pdu))
+            except socket.timeout:
+                raise
+            except socket.error as e:
+                self.logger.warning(e)
+                raise exceptions.ConnectionError()
+            if not raw_pdu:
+                raise exceptions.ConnectionError()
+            raw_pdu += raw_pdu_part
 
         self.logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
 

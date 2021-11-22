@@ -1,3 +1,7 @@
+### `2.2.1`
+
+* Fix: split message detection #182 #184 (@fpalamour)
+
 ### `2.2.0`
 
 * New: allow customizing how error PDUs are handled (@davidshepherd7)

@@ -20,7 +20,7 @@ def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT, use_udhi=True):
         encode, split_length, part_size = ENCODINGS[encoding]
         encoded_text = encode(text)
 
-    if len(text) > split_length:
+    if len(encoded_text) > split_length:
         if use_udhi:
             # Split the text into well-formed parts.
             esm_class = consts.SMPP_GSMFEAT_UDHI

@@ -256,7 +256,7 @@ class Client(object):
             except socket.error as e:
                 self.logger.warning(e)
                 raise exceptions.ConnectionError()
-            if not raw_pdu:
+            if not raw_pdu_part:
                 raise exceptions.ConnectionError()
             raw_pdu += raw_pdu_part
 

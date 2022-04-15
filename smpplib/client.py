@@ -207,22 +207,14 @@ class Client(object):
             ))
 
         self.logger.debug('Sending %s PDU', p.command)
-
         generated = p.generate()
-
         self.logger.debug('>>%s (%d bytes)', binascii.b2a_hex(generated), len(generated))
 
-        sent = 0
-
-        while sent < len(generated):
-            try:
-                sent_last = self._socket.send(generated[sent:])
-            except socket.error as e:
-                self.logger.warning(e)
-                raise exceptions.ConnectionError()
-            if sent_last == 0:
-                raise exceptions.ConnectionError()
-            sent += sent_last
+        try:
+            self._socket.sendall(generated)
+        except socket.error as e:
+            self.logger.warning(e)
+            raise exceptions.ConnectionError()
 
         return True
 

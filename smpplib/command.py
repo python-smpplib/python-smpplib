@@ -410,7 +410,7 @@ class BindTransmitter(Command):
     )
 
     def __init__(self, command, **kwargs):
-        super(BindTransmitter, self).__init__(command, need_sequence=False, **kwargs)
+        super(BindTransmitter, self).__init__(command, need_sequence=True, **kwargs)
 
         self._set_vars(**(dict.fromkeys(self.params)))
         self.interface_version = consts.SMPP_VERSION_34
@@ -817,7 +817,7 @@ class DeliverSM(SubmitSM):
     )
 
     def __init__(self, command, **kwargs):
-        super(DeliverSM, self).__init__(command, need_sequence=False, **kwargs)
+        super(DeliverSM, self).__init__(command, need_sequence=True, **kwargs)
         self._set_vars(**(dict.fromkeys(self.params)))
 
 
@@ -900,7 +900,7 @@ class Unbind(Command):
     params_order = ()
 
     def __init__(self, command, **kwargs):
-        super(Unbind, self).__init__(command, need_sequence=False, **kwargs)
+        super(Unbind, self).__init__(command, need_sequence=True, **kwargs)
 
 
 class UnbindResp(Command):
@@ -919,7 +919,7 @@ class EnquireLink(Command):
     params_order = ()
 
     def __init__(self, command, **kwargs):
-        super(EnquireLink, self).__init__(command, need_sequence=False, **kwargs)
+        super(EnquireLink, self).__init__(command, need_sequence=True, **kwargs)
 
 
 class EnquireLinkResp(Command):

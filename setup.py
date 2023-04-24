@@ -12,7 +12,7 @@ except OSError:
 
 setup(
     name='smpplib',
-    version='2.2.1',
+    version='2.2.3',
     url='https://github.com/python-smpplib/python-smpplib',
     description='SMPP library for python',
     packages=find_packages(),

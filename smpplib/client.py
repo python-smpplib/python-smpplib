@@ -24,9 +24,9 @@ import logging
 import select
 import socket
 import struct
-import time
 import warnings
 
+from monotonic import monotonic
 from smpplib import consts, exceptions, smpp
 
 
@@ -427,13 +427,11 @@ class Client(object):
 class ThreadSafeClient(Client):
     should_stop = False
 
-    def __init__(
-        self,
-        *args,
-        select_timeout=1.0,
-        **kwargs
-    ):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        # Socket polling period
+        select_timeout = kwargs.get('select_timeout', 1.0)
+
+        super(ThreadSafeClient, self).__init__(*args, **kwargs)
 
         self._select_timeout = select_timeout
 
@@ -447,14 +445,14 @@ class ThreadSafeClient(Client):
         """Accept an object"""
         raise NotImplementedError('not implemented')
 
-    def send_pdu(self, pdu, send_later=False) -> bool:
+    def send_pdu(self, pdu, send_later=False):
         if send_later:
             self._send_queue.append(pdu)
             self._send_sock.send(b'\x00')
             return True
         else:
-            pdu_sent = super().send_pdu(pdu)
-            self._last_active_time = time.monotonic()
+            pdu_sent = super(ThreadSafeClient, self).send_pdu(pdu)
+            self._last_active_time = monotonic()
             return pdu_sent
 
     def send_message(self, send_later=True, **kwargs):
@@ -464,11 +462,11 @@ class ThreadSafeClient(Client):
 
     def _should_prolong_session(self):
         # We need some time to send enquire_link before the next `select` call comes
-        passed_from_last_message = time.monotonic() - self._last_active_time
+        passed_from_last_message = monotonic() - self._last_active_time
 
         return self.timeout - self._select_timeout <= passed_from_last_message
 
-    def observe(self, ignore_error_codes=None, auto_send_enquire_link=True) -> None:
+    def observe(self, ignore_error_codes=None, auto_send_enquire_link=True):
         while not self.should_stop:
             rlist, _, _ = select.select(
                 [self._socket, self._read_sock], [], [], self._select_timeout,

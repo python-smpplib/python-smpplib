@@ -16,7 +16,7 @@ setup(
     url='https://github.com/python-smpplib/python-smpplib',
     description='SMPP library for python',
     packages=find_packages(),
-    install_requires=['six'],
+    install_requires=['six', 'monotonic'],
     extras_require=dict(
         tests=('typing; python_version < "3.5"', 'pytest', 'mock'),
     ),

@@ -3,6 +3,7 @@ import warnings
 
 import pytest
 from mock import call, Mock
+from monotonic import monotonic
 
 from smpplib import consts
 from smpplib import exceptions
@@ -50,7 +51,7 @@ def test_client_error_pdu_custom_handler():
 
 def test_prolongation():
     client = ThreadSafeClient("localhost", 5679)
-    client._last_active_time = time.monotonic()
+    client._last_active_time = monotonic()
     assert not client._should_prolong_session()
 
     time.sleep(client.timeout - client._select_timeout)

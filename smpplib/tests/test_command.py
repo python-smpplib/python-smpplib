@@ -1,11 +1,13 @@
 from smpplib import consts, exceptions
+from smpplib.client import Client
 from smpplib.command import DeliverSM
 
 import pytest
 
 
 def test_parse_deliver_sm():
-    pdu = DeliverSM('deliver_sm')
+    client = Client("localhost", 5679)
+    pdu = DeliverSM('deliver_sm', client=client)
     pdu.parse(
         b"\x00\x00\x00\xcb\x00\x00\x00\x05\x00\x00\x00\x00\x00\x00\x00\x01\x00"
         b"\x01\x0131600000000\x00\x05\x00XXX YYYY\x00\x04\x00\x00\x00\x00\x00"
@@ -26,7 +28,8 @@ def test_parse_deliver_sm():
 
 
 def test_unrecognised_optional_parameters():
-    pdu = DeliverSM("deliver_sm", allow_unknown_opt_params=True)
+    client = Client("localhost", 5679)
+    pdu = DeliverSM("deliver_sm", client=client, allow_unknown_opt_params=True)
     pdu.parse(b'\x00\x00\x00\xa8\x00\x00\x00\x05\x00\x00\x00\x00/p\xc6'
               b'\x9a\x00\x00\x0022549909028\x00\x01\x00\x00\x04\x00\x00'
               b'\x00\x00\x00\x00\x00\x00iid:795920026 sub:001 dlvrd:001 '
@@ -37,7 +40,7 @@ def test_unrecognised_optional_parameters():
     # This is only to avoid a breaking change, at some point the other behaviour
     # should become the default.
     with pytest.raises(exceptions.UnknownCommandError):
-        pdu2 = DeliverSM("deliver_sm")
+        pdu2 = DeliverSM("deliver_sm", client=client)
         pdu2.parse(b'\x00\x00\x00\xa8\x00\x00\x00\x05\x00\x00\x00\x00/p\xc6'
                   b'\x9a\x00\x00\x0022549909028\x00\x01\x00\x00\x04\x00\x00'
                   b'\x00\x00\x00\x00\x00\x00iid:795920026 sub:001 dlvrd:001 '

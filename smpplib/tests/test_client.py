@@ -1,11 +1,14 @@
+import time
 import warnings
-import pytest
-from mock import Mock, call
 
-from smpplib.client import Client
-from smpplib.smpp import make_pdu
+import pytest
+from mock import call, Mock
+from monotonic import monotonic
+
 from smpplib import consts
 from smpplib import exceptions
+from smpplib.client import Client, ThreadSafeClient
+from smpplib.smpp import make_pdu
 
 
 def test_client_construction_allow_unknown_opt_params_warning():
@@ -44,3 +47,13 @@ def test_client_error_pdu_custom_handler():
     client.read_once()
 
     assert mock_error_pdu_handler.mock_calls == [call(error_pdu)]
+
+
+def test_prolongation():
+    client = ThreadSafeClient("localhost", 5679)
+    client._last_active_time = monotonic()
+    assert not client._should_prolong_session()
+
+    time.sleep(client.timeout - client._select_timeout)
+
+    assert client._should_prolong_session()

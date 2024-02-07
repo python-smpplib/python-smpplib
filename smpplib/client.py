@@ -162,7 +162,7 @@ class Client(object):
 
         self.send_pdu(p)
         try:
-            resp = self.read_pdu()
+            resp, ascii_pdu = self.read_pdu()
         except socket.timeout:
             raise exceptions.ConnectionError()
         if resp.is_error():
@@ -252,8 +252,10 @@ class Client(object):
             raise exceptions.PDUError('Broken PDU')
 
         raw_pdu = raw_len + self._recv_exact(length - 4)
+        ascii_pdu = binascii.b2a_hex(raw_pdu) #Modified        
 
         self.logger.debug('<<%s (%d bytes)', binascii.b2a_hex(raw_pdu), len(raw_pdu))
+        #print("ascii_pdu_library", ascii_pdu)
 
         pdu = smpp.parse_pdu(
             raw_pdu,
@@ -264,12 +266,12 @@ class Client(object):
         self.logger.debug('Read %s PDU', pdu.command)
 
         if pdu.is_error():
-            return pdu
+            return pdu#, ascii_pdu #Modified
 
         elif pdu.command in consts.STATE_SETTERS:
             self.state = consts.STATE_SETTERS[pdu.command]
 
-        return pdu
+        return pdu, ascii_pdu #Modified
 
     def accept(self, obj):
         """Accept an object"""
@@ -345,7 +347,7 @@ class Client(object):
 
         try:
             try:
-                pdu = self.read_pdu()
+                pdu, ascii_pdu = self.read_pdu()
             except socket.timeout:
                 if not auto_send_enquire_link:
                     raise
@@ -379,6 +381,8 @@ class Client(object):
                 self.logger.warning('(%d) %s. Ignored.', e.args[1], e.args[0])
             else:
                 raise
+        
+        return ascii_pdu
 
     def poll(self, ignore_error_codes=None, auto_send_enquire_link=True):
         """Act on available PDUs and return"""
@@ -406,7 +410,13 @@ class Client(object):
 
         ssm = smpp.make_pdu('submit_sm', client=self, **kwargs)
         self.send_pdu(ssm)
-        return ssm
+
+        try:
+            resp, ascii_pdu = self.read_pdu()
+        except socket.timeout:
+            raise exceptions.ConnectionError()
+        
+        return ssm, ascii_pdu
 
     def query_message(self, **kwargs):
         """Query message state

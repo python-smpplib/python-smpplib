@@ -192,11 +192,13 @@ class Client(object):
         p = smpp.make_pdu('unbind', client=self)
 
         self.send_pdu(p)
+        '''
         try:
             return self.read_pdu()
         except socket.timeout:
             raise exceptions.ConnectionError()
-
+        '''
+        
     def send_pdu(self, p):
         """Send PDU to the SMSC"""
 

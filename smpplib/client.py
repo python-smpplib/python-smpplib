@@ -192,11 +192,13 @@ class Client(object):
         p = smpp.make_pdu('unbind', client=self)
 
         self.send_pdu(p)
+        '''
         try:
             return self.read_pdu()
         except socket.timeout:
             raise exceptions.ConnectionError()
-
+        '''
+        
     def send_pdu(self, p):
         """Send PDU to the SMSC"""
 
@@ -237,7 +239,7 @@ class Client(object):
             received += len(part)
             parts.append(part)
         return b"".join(parts)
-
+    
     def read_pdu(self):
         """Read PDU from the SMSC"""
 
@@ -270,6 +272,22 @@ class Client(object):
             self.state = consts.STATE_SETTERS[pdu.command]
 
         return pdu
+    
+    def read_rawpdu(self):
+        """Read PDU from the SMSC"""
+
+        raw_len = self._recv_exact(4)
+
+        try:
+            length = struct.unpack('>L', raw_len)[0]
+        except struct.error:
+            self.logger.warning('Receive broken pdu... %s', repr(raw_len))
+            raise exceptions.PDUError('Broken PDU')
+
+        raw_pdu = raw_len + self._recv_exact(length - 4)
+        raw_pdu = binascii.b2a_hex(raw_pdu)
+
+        return raw_pdu
 
     def accept(self, obj):
         """Accept an object"""
@@ -332,7 +350,29 @@ class Client(object):
             consts.DESCRIPTIONS.get(pdu.status, 'Unknown status')),
             int(pdu.status),
         )
+    
+    def read_once_rawpdu(self, ignore_error_codes=None, auto_send_enquire_link=True):
 
+        if ignore_error_codes is not None:
+            warnings.warn(
+                "ignore_error_codes is deprecated, use set_error_pdu_handler to "
+                "configure a custom error PDU handler instead.",
+                DeprecationWarning,
+            )
+
+
+        try:
+            ascii_pdu = self.read_rawpdu()
+        except socket.timeout:
+            if not auto_send_enquire_link:
+                raise
+            self.logger.debug('Socket timeout, listening again')
+            pdu = smpp.make_pdu('enquire_link', client=self)
+            self.send_pdu(pdu)
+            return
+            
+        return ascii_pdu
+    
     def read_once(self, ignore_error_codes=None, auto_send_enquire_link=True):
         """Read a PDU and act"""
 
@@ -406,7 +446,29 @@ class Client(object):
 
         ssm = smpp.make_pdu('submit_sm', client=self, **kwargs)
         self.send_pdu(ssm)
+        
         return ssm
+    
+    def send_message_rawpdu(self, **kwargs):
+        """Send message
+
+        Required Arguments:
+            source_addr_ton -- Source address TON
+            source_addr -- Source address (string)
+            dest_addr_ton -- Destination address TON
+            destination_addr -- Destination address (string)
+            short_message -- Message text (string)
+        """
+
+        ssm = smpp.make_pdu('submit_sm', client=self, **kwargs)
+        self.send_pdu(ssm)
+        
+        try:
+            ascii_pdu = self.read_rawpdu()
+        except socket.timeout:
+            raise exceptions.ConnectionError()
+        
+        return ssm, ascii_pdu
 
     def query_message(self, **kwargs):
         """Query message state

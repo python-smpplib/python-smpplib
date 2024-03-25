@@ -171,7 +171,7 @@ class Command(pdu.PDU):
             value = field_value.ljust(size, chr(0))
         elif hasattr(self.params[field], 'max'):
             if len(field_value or '') >= self.params[field].max:
-                field_value = field_value[0:self.params[field].max - 1]
+                field_value = field_value[0:self.params[field].max]
 
             if field_value:
                 value = field_value + chr(0)
@@ -213,7 +213,7 @@ class Command(pdu.PDU):
             value = struct.pack(">HH", field_code, size) + fvalue
         elif hasattr(self.params[field], 'max'):
             if len(field_value or '') > self.params[field].max:
-                field_value = field_value[0:self.params[field].max - 1]
+                field_value = field_value[0:self.params[field].max]
 
             if field_value:
                 fvalue = field_value + chr(0)

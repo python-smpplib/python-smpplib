@@ -92,7 +92,7 @@ class Client(object):
             self.allow_unknown_opt_params = allow_unknown_opt_params
 
 
-        self._socket = self._create_socket()
+        self._socket = None
 
     def __enter__(self):
         return self

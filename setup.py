@@ -12,14 +12,11 @@ except OSError:
 
 setup(
     name='smpplib',
-    version='2.2.3',
+    version='2.2.4',
     url='https://github.com/python-smpplib/python-smpplib',
     description='SMPP library for python',
     packages=find_packages(),
     install_requires=['six'],
-    extras_require=dict(
-        tests=('typing; python_version < "3.5"', 'pytest', 'mock'),
-    ),
     zip_safe=True,
     classifiers=(
         'Development Status :: 5 - Production/Stable',
@@ -29,10 +26,11 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Programming Language :: Python',
         'Topic :: Communications :: Telephony',
         'Topic :: Communications',

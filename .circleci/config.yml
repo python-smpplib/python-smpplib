@@ -3,20 +3,18 @@ workflows:
   version: 2
   test:
     jobs:
+      - test-3.13
+      - test-3.12
+      - test-3.11
       - test-3.10
       - test-3.9
-      - test-3.8
-      - test-3.7
-      - test-3.6
-      - test-3.5
-      - test-3.4
       - test-2.7
       - test-pypy3
       - test-pypy2
 jobs:
-  test-3.10: &test-template
+  test-3.13: &test-template
     docker:
-      - image: python:3.10 # We run one test in non-alpine environment, just in case
+      - image: python:3.13 # We run one test in non-alpine environment, just in case
     working_directory: ~/work
     steps:
       - checkout
@@ -37,30 +35,22 @@ jobs:
           command: |
             . venv/bin/activate
             pytest -v
+  test-3.12:
+    <<: *test-template
+    docker:
+      - image: python:3.12-alpine
+  test-3.11:
+    <<: *test-template
+    docker:
+      - image: python:3.11-alpine
+  test-3.10:
+    <<: *test-template
+    docker:
+      - image: python:3.10-alpine
   test-3.9:
     <<: *test-template
     docker:
       - image: python:3.9-alpine
-  test-3.8:
-    <<: *test-template
-    docker:
-      - image: python:3.8-alpine
-  test-3.7:
-    <<: *test-template
-    docker:
-      - image: python:3.7-alpine
-  test-3.6:
-    <<: *test-template
-    docker:
-      - image: python:3.6-alpine
-  test-3.5:
-    <<: *test-template
-    docker:
-      - image: python:3.5-alpine
-  test-3.4:
-    <<: *test-template
-    docker:
-      - image: python:3.4-alpine
   test-2.7:
     <<: *test-template
     docker:

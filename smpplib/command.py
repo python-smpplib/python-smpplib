@@ -65,7 +65,7 @@ def get_optional_name(code):
     UnkownCommandError exception"""
 
     for key, value in six.iteritems(consts.OPTIONAL_PARAMS):
-        if value == code:
+        if code in value:
             return key
 
     raise exceptions.UnknownCommandError('Unknown SMPP command code "0x%x"' % code)

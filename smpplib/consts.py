@@ -1,7 +1,6 @@
 EMPTY_STRING = b''
 NULL_STRING = b'\0'
 
-
 # Message part lengths in different encodings.
 # SMPP 3.4, 2.2.1.2
 SEVENBIT_LENGTH = 160
@@ -13,7 +12,6 @@ MULTIPART_HEADER_SIZE = 6
 SEVENBIT_PART_SIZE = SEVENBIT_LENGTH - 7  # TODO: where does 7 come from?
 EIGHTBIT_PART_SIZE = 140 - MULTIPART_HEADER_SIZE
 UCS2_PART_SIZE = 140 - MULTIPART_HEADER_SIZE  # must be an even number anyway
-
 
 # SMPP error codes.
 SMPP_ESME_ROK = 0x00000000
@@ -64,7 +62,6 @@ SMPP_ESME_RMISSINGOPTPARAM = 0x000000C3
 SMPP_ESME_RINVOPTPARAMVAL = 0x000000C4
 SMPP_ESME_RDELIVERYFAILURE = 0x000000FE
 SMPP_ESME_RUNKNOWNERR = 0x000000FF
-
 
 # Status description strings.
 DESCRIPTIONS = {
@@ -118,14 +115,12 @@ DESCRIPTIONS = {
     SMPP_ESME_RUNKNOWNERR: 'Unknown Error',
 }
 
-
 # Internal client state.
 SMPP_CLIENT_STATE_CLOSED = 0
 SMPP_CLIENT_STATE_OPEN = 1
 SMPP_CLIENT_STATE_BOUND_TX = 2
 SMPP_CLIENT_STATE_BOUND_RX = 3
 SMPP_CLIENT_STATE_BOUND_TRX = 4
-
 
 # TON (Type Of Number) values.
 SMPP_TON_UNK = 0x00
@@ -135,7 +130,6 @@ SMPP_TON_NWSPEC = 0x03
 SMPP_TON_SBSCR = 0x04
 SMPP_TON_ALNUM = 0x05
 SMPP_TON_ABBREV = 0x06
-
 
 # NPI (Numbering Plan Indicator) values.
 SMPP_NPI_UNK = 0x00  # Unknown
@@ -148,7 +142,6 @@ SMPP_NPI_PRVT = 0x09  # Private
 SMPP_NPI_ERMES = 0x0A  # ERMES
 SMPP_NPI_IP = 0x0E  # IPv4
 SMPP_NPI_WAP = 0x12  # WAP
-
 
 # Encoding types.
 SMPP_ENCODING_DEFAULT = 0x00  # SMSC Default
@@ -165,7 +158,6 @@ SMPP_ENCODING_ISO2022JP = 0x0A  # ISO-2022-JP (Music Codes)
 SMPP_ENCODING_EXTJIS = 0x0D  # Extended Kanji JIS (X 0212-1990)
 SMPP_ENCODING_KSC5601 = 0x0E  # KS C 5601
 
-
 # Language types.
 SMPP_LANG_DEFAULT = 0x00
 SMPP_LANG_EN = 0x01
@@ -173,29 +165,24 @@ SMPP_LANG_FR = 0x02
 SMPP_LANG_ES = 0x03
 SMPP_LANG_DE = 0x04
 
-
 # ESM class values.
 SMPP_MSGMODE_DEFAULT = 0x00  # Default SMSC mode (e.g. Store and Forward)
 SMPP_MSGMODE_DATAGRAM = 0x01  # Datagram mode
 SMPP_MSGMODE_FORWARD = 0x02  # Forward (i.e. Transaction) mode
 SMPP_MSGMODE_STOREFORWARD = 0x03  # Explicit Store and Forward mode
 
-
 SMPP_MSGTYPE_DEFAULT = 0x00  # Default message type (i.e. normal message)
 SMPP_MSGTYPE_DELIVERYACK = 0x08  # Message containts ESME Delivery acknowledgement
 SMPP_MSGTYPE_USERACK = 0x10  # Message containts ESME Manual/User acknowledgement
-
 
 SMPP_GSMFEAT_NONE = 0x00  # No specific features selected
 SMPP_GSMFEAT_UDHI = 0x40  # UDHI Indicator (only relevant for MT msgs)
 SMPP_GSMFEAT_REPLYPATH = 0x80  # Set Reply Path (only relevant for GSM net)
 SMPP_GSMFEAT_UDHIREPLYPATH = 0xC0  # Set UDHI and Reply Path (for GSM net)
 
-
 # SMPP Protocol ID.
 SMPP_PID_DEFAULT = 0x00  # Default
 SMPP_PID_RIP = 0x41  # Replace if present on handset
-
 
 # SMPP User Data Header Information Element Identifier.
 SMPP_UDHIEIE_CONCATENATED = 0x00  # Concatenated short message, 8-bit ref
@@ -205,12 +192,10 @@ SMPP_UDHIEIE_PORT8 = 0x04
 SMPP_UDHIEIE_PORT16 = 0x05
 SMPP_UDHIEIE_CONCATENATED16 = 0x08
 
-
 # `ms_availability_status` parameter from `alert_notification` operation.
 SMPP_MS_AVAILABILITY_STATUS_AVAILABLE = 0x00
 SMPP_MS_AVAILABILITY_STATUS_DENIED = 0x01
 SMPP_MS_AVAILABILITY_STATUS_UNAVAILABLE = 0x02
-
 
 # `registered_delivery` parameter used to request an SMSC delivery receipt and/or SME originated acknowledgements.
 # SMSC Delivery Receipt (bits 1 and 0).
@@ -219,7 +204,6 @@ SMPP_SMSC_DELIVERY_RECEIPT_BOTH = 0x01  # SMSC Delivery Receipt requested where 
 SMPP_SMSC_DELIVERY_RECEIPT_FAILURE = 0x02  # SMSC Delivery Receipt requested where the final delivery outcome is delivery failure
 SMPP_SMSC_DELIVERY_RECEIPT_BITMASK = 0x03  # Reserved.
 
-
 # SME originated Acknowledgement (bits 3 and 2).
 SMPP_SME_ACK_BITMASK = 0x0C  # No recipient SME acknowledgment requested (default)
 SMPP_SME_ACK_NONE = 0x00  # No recipient SME acknowledgment requested (default)
@@ -227,17 +211,14 @@ SMPP_SME_ACK_DELIVERY = 0x04  # SME Delivery Acknowledgement requested
 SMPP_SME_ACK_MANUAL = 0x08  # SME Manual/User Acknowledgment requested
 SMPP_SME_ACK_BOTH = 0x0C  # Both Delivery and Manual/User Acknowledgment requested
 
-
 # Intermediate Notification (bit 5).
 SMPP_INT_NOTIFICATION_BITMASK = 0x10
 SMPP_INT_NOTIFICATION_NONE = 0x00  # No Intermediate notification requested (default)
 SMPP_INT_NOTIFICATION_REQUESTED = 0x10  # Intermediate notification requested
 
-
 # SMPP protocol versions.
 SMPP_VERSION_33 = 0x33
 SMPP_VERSION_34 = 0x34
-
 
 # Network types.
 SMPP_NETWORK_TYPE_UNKNOWN = 0x00
@@ -250,7 +231,6 @@ SMPP_NETWORK_TYPE_IDEN = 0x06
 SMPP_NETWORK_TYPE_AMPS = 0x07
 SMPP_NETWORK_TYPE_PAGING = 0x08
 
-
 # Message state.
 SMPP_MESSAGE_STATE_ENROUTE = 1
 SMPP_MESSAGE_STATE_DELIVERED = 2
@@ -260,7 +240,6 @@ SMPP_MESSAGE_STATE_UNDELIVERABLE = 5
 SMPP_MESSAGE_STATE_ACCEPTED = 6
 SMPP_MESSAGE_STATE_UNKNOWN = 7
 SMPP_MESSAGE_STATE_REJECTED = 8
-
 
 COMMAND_STATES = {
     'bind_transmitter': (SMPP_CLIENT_STATE_OPEN,),
@@ -320,7 +299,6 @@ COMMAND_STATES = {
     )
 }
 
-
 STATE_SETTERS = {
     'bind_transmitter_resp': SMPP_CLIENT_STATE_BOUND_TX,
     'bind_receiver_resp': SMPP_CLIENT_STATE_BOUND_RX,
@@ -328,54 +306,52 @@ STATE_SETTERS = {
     'unbind_resp': SMPP_CLIENT_STATE_OPEN,
 }
 
-
 OPTIONAL_PARAMS = {
-    'dest_addr_subunit': 0x0005,
-    'dest_network_type': 0x0006,
-    'dest_bearer_type': 0x0007,
-    'dest_telematics_id': 0x0008,
-    'source_addr_subunit': 0x000D,
-    'source_network_type': 0x000E,
-    'source_bearer_type': 0x000F,
-    'source_telematics_id': 0x010,
-    'qos_time_to_live': 0x0017,
-    'payload_type': 0x0019,
-    'additional_status_info_text': 0x01D,
-    'receipted_message_id': 0x001E,
-    'ms_msg_wait_facilities': 0x0030,
-    'privacy_indicator': 0x0201,
-    'source_subaddress': 0x0202,
-    'dest_subaddress': 0x0203,
-    'user_message_reference': 0x0204,
-    'user_response_code': 0x0205,
-    'source_port': 0x020A,
-    'destination_port': 0x020B,
-    'sar_msg_ref_num': 0x020C,
-    'language_indicator': 0x020D,
-    'sar_total_segments': 0x020E,
-    'sar_segment_seqnum': 0x020F,
-    'sc_interface_version': 0x0210,  # 0x1002,
-    'callback_num_pres_ind': 0x0302,
-    'callback_num_atag': 0x0303,
-    'number_of_messages': 0x0304,
-    'callback_num': 0x0381,
-    'dpf_result': 0x0420,
-    'set_dpf': 0x0421,
-    'ms_availability_status': 0x0422,
-    'network_error_code': 0x0423,
-    'message_payload': 0x0424,
-    'delivery_failure_reason': 0x0425,
-    'more_messages_to_send': 0x0426,
-    'message_state': 0x0427,
-    'ussd_service_op': 0x0501,
-    'display_time': 0x1201,
-    'sms_signal': 0x1203,
-    'ms_validity': 0x1204,
-    'alert_on_message_delivery': 0x130C,
-    'its_reply_type': 0x1380,
-    'its_session_info': 0x1383,
+    'dest_addr_subunit': (0x0005,),
+    'dest_network_type': (0x0006,),
+    'dest_bearer_type': (0x0007,),
+    'dest_telematics_id': (0x0008,),
+    'source_addr_subunit': (0x000D,),
+    'source_network_type': (0x000E,),
+    'source_bearer_type': (0x000F,),
+    'source_telematics_id': (0x010,),
+    'qos_time_to_live': (0x0017,),
+    'payload_type': (0x0019,),
+    'additional_status_info_text': (0x01D,),
+    'receipted_message_id': (0x001E,),
+    'ms_msg_wait_facilities': (0x0030,),
+    'privacy_indicator': (0x0201,),
+    'source_subaddress': (0x0202,),
+    'dest_subaddress': (0x0203,),
+    'user_message_reference': (0x0204,),
+    'user_response_code': (0x0205,),
+    'source_port': (0x020A,),
+    'destination_port': (0x020B,),
+    'sar_msg_ref_num': (0x020C,),
+    'language_indicator': (0x020D,),
+    'sar_total_segments': (0x020E,),
+    'sar_segment_seqnum': (0x020F,),
+    'sc_interface_version': (0x0210,),  # 0x1002
+    'callback_num_pres_ind': (0x0302,),
+    'callback_num_atag': (0x0303,),
+    'number_of_messages': (0x0304,),
+    'callback_num': (0x0381,),
+    'dpf_result': (0x0420,),
+    'set_dpf': (0x0421,),
+    'ms_availability_status': (0x0422,),
+    'network_error_code': (0x0423, 0x1403,),
+    'message_payload': (0x0424,),
+    'delivery_failure_reason': (0x0425,),
+    'more_messages_to_send': (0x0426,),
+    'message_state': (0x0427,),
+    'ussd_service_op': (0x0501,),
+    'display_time': (0x1201,),
+    'sms_signal': (0x1203,),
+    'ms_validity': (0x1204,),
+    'alert_on_message_delivery': (0x130C,),
+    'its_reply_type': (0x1380,),
+    'its_session_info': (0x1383,),
 }
-
 
 # Integer value struct formats for different sizes.
 INT_PACK_FORMATS = {

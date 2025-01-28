@@ -36,6 +36,11 @@ class default_client(object):
     """Dummy client"""
     sequence = 0
 
+    def next_sequence(self):
+        current_sequence = self.sequence
+        self.sequence += 1
+        return current_sequence
+
 
 class PDU(object):
     """PDU class"""

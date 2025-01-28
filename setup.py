@@ -17,9 +17,6 @@ setup(
     description='SMPP library for python',
     packages=find_packages(),
     install_requires=['six'],
-    extras_require=dict(
-        tests=('typing; python_version < "3.5"', 'pytest', 'mock'),
-    ),
     zip_safe=True,
     classifiers=(
         'Development Status :: 5 - Production/Stable',

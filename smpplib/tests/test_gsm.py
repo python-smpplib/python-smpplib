@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 
-import mock
 from pytest import mark, raises
+from unittest import mock
 
 from smpplib import consts
 from smpplib.gsm import gsm_encode, make_parts, make_parts_encoded

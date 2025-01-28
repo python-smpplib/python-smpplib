@@ -1,6 +1,6 @@
 import warnings
 import pytest
-from mock import Mock, call
+from unittest.mock import Mock, call
 
 from smpplib.client import Client
 from smpplib.smpp import make_pdu

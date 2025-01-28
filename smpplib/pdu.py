@@ -18,6 +18,7 @@
 
 """PDU module"""
 
+import re
 import struct
 
 from smpplib import command_codes, consts
@@ -44,6 +45,7 @@ class PDU(object):
     command = None
     status = None
     _sequence = None
+    dlr_regex = None
 
     def __init__(self, client=default_client(), **kwargs):
         """Singleton dummy client will be used if omitted"""
@@ -99,6 +101,22 @@ class PDU(object):
             return "Description for status 0x%x not found!" % status
 
         return desc
+
+    @staticmethod
+    def set_delivey_receipt_regex(regex):
+        """To replace the regex used if SMSC uses a different format"""
+        PDU.dlr_regex = re.compile(regex, re.IGNORECASE)
+
+    def parse_deliver_receipt(self):
+        """Parses the short_message property to retrieve deliver_sm infos"""
+
+        if self.command != 'deliver_sm':
+            raise ValueError("Invalid PDU command: %s", self.command)
+
+        if PDU.dlr_regex is None:
+            PDU.dlr_regex = re.compile(br'^id:(?P<id>\S+)\s+sub:(?P<sub>\S+)\s+dlvrd:(?P<dlvrd>\S+)\s+submit date:(?P<submit_date>\S+)\s+done date:(?P<done_date>\S+)\s+stat:(?P<stat>\S+)\s+err:(?P<err>\S+)\s+Text:(?P<text>.*)$', re.IGNORECASE)
+
+        return PDU.dlr_regex.match(self.short_message).groupdict()
 
     def parse(self, data):
         """Parse raw PDU"""

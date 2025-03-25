@@ -126,7 +126,9 @@ class Client(object):
         if self._ssl_context is None:
             return raw_socket
 
-        return self._ssl_context.wrap_socket(raw_socket)
+        server_hostname = self.host if self._ssl_context.check_hostname else None
+
+        return self._ssl_context.wrap_socket(raw_socket, server_hostname=server_hostname)
 
     def connect(self):
         """Connect to SMSC"""

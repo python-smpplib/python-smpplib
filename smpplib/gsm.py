@@ -24,13 +24,11 @@ def make_parts(text, encoding=consts.SMPP_ENCODING_DEFAULT, use_udhi=True):
         if use_udhi:
             # Split the text into well-formed parts.
             esm_class = consts.SMPP_GSMFEAT_UDHI
-            # FIXME: 7-bit encoding has variable-length characters.
-            # FIXME: it means that a character may be broken by splitting.
-            parts = make_parts_encoded(encoded_text, part_size)
+            parts = make_parts_encoded(encoded_text, part_size, encoding)
         else:
             # We will have to use SaR to send the message
             esm_class = consts.SMPP_MSGTYPE_DEFAULT
-            parts = split_sequence(encoded_text, part_size)
+            parts = split_sequence(encoded_text, part_size, encoding)
             if len(parts) > 255:
                 raise exceptions.MessageTooLong()
     else:
@@ -71,9 +69,9 @@ ENCODINGS = {
 }
 
 
-def make_parts_encoded(encoded_text, part_size):
-    """Splits encoded text into SMS parts"""
-    chunks = split_sequence(encoded_text, part_size)
+def make_parts_encoded(encoded_text, part_size, encoding=None):
+    """Splits encoded text into SMS parts, preserving GSM escape sequences"""
+    chunks = split_sequence(encoded_text, part_size, encoding)
     if len(chunks) > 255:
         raise exceptions.MessageTooLong()
 
@@ -83,6 +81,22 @@ def make_parts_encoded(encoded_text, part_size):
     return [b''.join((header, six.int2byte(i), chunk)) for i, chunk in enumerate(chunks, start=1)]
 
 
-def split_sequence(sequence, part_size):
-    """Splits the sequence into equal parts"""
-    return [sequence[i:i + part_size] for i in range(0, len(sequence), part_size)]
+def split_sequence(sequence, part_size, encoding=None):
+    """Splits a sequence, keeping GSM escapes intact when encoding is default"""
+    if encoding != consts.SMPP_ENCODING_DEFAULT:
+        return [sequence[i:i + part_size] for i in range(0, len(sequence), part_size)]
+
+    if part_size < 2:
+        raise ValueError('GSM parts must have room for an escape sequence')
+
+    chunks = []
+    start = 0
+    while start < len(sequence):
+        end = min(start + part_size, len(sequence))
+        # Keep the escape and its extension-table character in the same SMS.
+        if end < len(sequence) and sequence[end - 1:end] == b'\x1b':
+            end -= 1
+        chunks.append(sequence[start:end])
+        start = end
+
+    return chunks
